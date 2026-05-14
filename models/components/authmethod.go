@@ -2,7 +2,7 @@
 
 package components
 
-// AuthMethodType - Type of authentication method:
+// Type of authentication method:
 // - `password`: Email/password authentication
 // - `otp`: One-time password via email (6-digit, expires in 10 minutes)
 // - `google`: Google OAuth 2.0
@@ -10,24 +10,24 @@ package components
 // - `azureAd`: Azure Active Directory
 // - `samlSso`: SAML 2.0 Single Sign-On
 // - `oauth`: Generic OAuth 2.0 provider
-type AuthMethodType string
+type Type string
 
 const (
-	AuthMethodTypeSamlSso   AuthMethodType = "samlSso"
-	AuthMethodTypeOtp       AuthMethodType = "otp"
-	AuthMethodTypePassword  AuthMethodType = "password"
-	AuthMethodTypeGoogle    AuthMethodType = "google"
-	AuthMethodTypeMicrosoft AuthMethodType = "microsoft"
-	AuthMethodTypeAzureAd   AuthMethodType = "azureAd"
-	AuthMethodTypeOauth     AuthMethodType = "oauth"
+	TypeSamlSso   Type = "samlSso"
+	TypeOtp       Type = "otp"
+	TypePassword  Type = "password"
+	TypeGoogle    Type = "google"
+	TypeMicrosoft Type = "microsoft"
+	TypeAzureAd   Type = "azureAd"
+	TypeOauth     Type = "oauth"
 )
 
-func (e AuthMethodType) ToPointer() *AuthMethodType {
+func (e Type) ToPointer() *Type {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *AuthMethodType) IsExact() bool {
+func (e *Type) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "samlSso", "otp", "password", "google", "microsoft", "azureAd", "oauth":
@@ -48,12 +48,12 @@ type AuthMethod struct {
 	// - `samlSso`: SAML 2.0 Single Sign-On
 	// - `oauth`: Generic OAuth 2.0 provider
 	//
-	Type AuthMethodType `json:"type"`
+	Type Type `json:"type"`
 }
 
-func (a *AuthMethod) GetType() AuthMethodType {
+func (a *AuthMethod) GetType() Type {
 	if a == nil {
-		return AuthMethodType("")
+		return Type("")
 	}
 	return a.Type
 }

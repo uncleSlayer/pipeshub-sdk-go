@@ -1,9 +1,0 @@
-# GetUserCreatedTeamsResponse
-
-
-## Fields
-
-| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
-| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                        | :heavy_check_mark:                                                                                        | N/A                                                                                                       |
-| `Object`                                                                                                  | [*operations.GetUserCreatedTeamsResponseBody](../../models/operations/getusercreatedteamsresponsebody.md) | :heavy_minus_sign:                                                                                        | User created teams retrieved successfully                                                                 |

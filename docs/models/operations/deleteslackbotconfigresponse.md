@@ -1,9 +1,0 @@
-# DeleteSlackBotConfigResponse
-
-
-## Fields
-
-| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
-| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
-| `Object`                                                                                                    | [*operations.DeleteSlackBotConfigResponseBody](../../models/operations/deleteslackbotconfigresponsebody.md) | :heavy_minus_sign:                                                                                          | Slack bot config deleted                                                                                    |

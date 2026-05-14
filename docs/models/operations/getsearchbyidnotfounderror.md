@@ -1,0 +1,9 @@
+# GetSearchByIDNotFoundError
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `Code`                                                                                                | [operations.GetSearchByIDNotFoundCode](../../models/operations/getsearchbyidnotfoundcode.md)          | :heavy_check_mark:                                                                                    | Machine-readable error code. `HTTP_NOT_FOUND`<br/>is emitted when the addressed resource does<br/>not exist.<br/> |
+| `Message`                                                                                             | *string*                                                                                              | :heavy_check_mark:                                                                                    | Human-readable description of the failure.                                                            |

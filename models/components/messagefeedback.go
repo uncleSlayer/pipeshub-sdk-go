@@ -48,14 +48,15 @@ func (r *Ratings) GetClarity() *int64 {
 type Category string
 
 const (
-	CategoryIncorrectInformation Category = "incorrect_information"
-	CategoryMissingInformation   Category = "missing_information"
-	CategoryOutdatedInformation  Category = "outdated_information"
-	CategoryIrrelevantResponse   Category = "irrelevant_response"
-	CategoryTooVerbose           Category = "too_verbose"
-	CategoryTooBrief             Category = "too_brief"
-	CategoryFormattingIssues     Category = "formatting_issues"
-	CategoryCitationIssues       Category = "citation_issues"
+	CategoryIncorrectInformation  Category = "incorrect_information"
+	CategoryMissingInformation    Category = "missing_information"
+	CategoryIrrelevantInformation Category = "irrelevant_information"
+	CategoryUnclearExplanation    Category = "unclear_explanation"
+	CategoryPoorCitations         Category = "poor_citations"
+	CategoryExcellentAnswer       Category = "excellent_answer"
+	CategoryHelpfulCitations      Category = "helpful_citations"
+	CategoryWellExplained         Category = "well_explained"
+	CategoryOther                 Category = "other"
 )
 
 func (e Category) ToPointer() *Category {
@@ -66,7 +67,7 @@ func (e Category) ToPointer() *Category {
 func (e *Category) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "incorrect_information", "missing_information", "outdated_information", "irrelevant_response", "too_verbose", "too_brief", "formatting_issues", "citation_issues":
+		case "incorrect_information", "missing_information", "irrelevant_information", "unclear_explanation", "poor_citations", "excellent_answer", "helpful_citations", "well_explained", "other":
 			return true
 		}
 	}
@@ -104,10 +105,19 @@ func (c *Comments) GetSuggestions() *string {
 }
 
 type CitationFeedback struct {
+	// Auto-generated sub-document identifier
+	ID             *string `json:"_id,omitzero"`
 	CitationID     *string `json:"citationId,omitzero"`
 	IsRelevant     *bool   `json:"isRelevant,omitzero"`
 	RelevanceScore *int64  `json:"relevanceScore,omitzero"`
 	Comment        *string `json:"comment,omitzero"`
+}
+
+func (c *CitationFeedback) GetID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ID
 }
 
 func (c *CitationFeedback) GetCitationID() *string {
@@ -138,19 +148,165 @@ func (c *CitationFeedback) GetComment() *string {
 	return c.Comment
 }
 
+// Source - Origin of the feedback. Always present in responses (server applies the default `user`).
+type Source string
+
+const (
+	SourceUser   Source = "user"
+	SourceSystem Source = "system"
+	SourceAdmin  Source = "admin"
+	SourceAuto   Source = "auto"
+)
+
+func (e Source) ToPointer() *Source {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *Source) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "user", "system", "admin", "auto":
+			return true
+		}
+	}
+	return false
+}
+
+type Revision struct {
+	// Auto-generated sub-document identifier
+	ID *string `json:"_id,omitzero"`
+	// Names of feedback fields modified in this revision
+	UpdatedFields []string `json:"updatedFields,omitzero"`
+	// Map of previously-set values for the fields named in `updatedFields`,
+	// keyed by field name. Stored as a Mongoose Map of Mixed values.
+	//
+	PreviousValues map[string]any `json:"previousValues,omitzero"`
+	UpdatedBy      *string        `json:"updatedBy,omitzero"`
+	// Time the revision was recorded, as epoch milliseconds.
+	UpdatedAt *int64 `json:"updatedAt,omitzero"`
+}
+
+func (r Revision) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
+}
+
+func (r *Revision) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Revision) GetID() *string {
+	if r == nil {
+		return nil
+	}
+	return r.ID
+}
+
+func (r *Revision) GetUpdatedFields() []string {
+	if r == nil {
+		return nil
+	}
+	return r.UpdatedFields
+}
+
+func (r *Revision) GetPreviousValues() map[string]any {
+	if r == nil {
+		return nil
+	}
+	return r.PreviousValues
+}
+
+func (r *Revision) GetUpdatedBy() *string {
+	if r == nil {
+		return nil
+	}
+	return r.UpdatedBy
+}
+
+func (r *Revision) GetUpdatedAt() *int64 {
+	if r == nil {
+		return nil
+	}
+	return r.UpdatedAt
+}
+
+// Metrics - Optional telemetry captured alongside the feedback
+type Metrics struct {
+	// Time from response delivery to feedback submission
+	TimeToFeedback *float64 `json:"timeToFeedback,omitzero"`
+	// Total time the user spent reviewing the response
+	UserInteractionTime *float64 `json:"userInteractionTime,omitzero"`
+	FeedbackSessionID   *string  `json:"feedbackSessionId,omitzero"`
+	UserAgent           *string  `json:"userAgent,omitzero"`
+	Platform            *string  `json:"platform,omitzero"`
+}
+
+func (m *Metrics) GetTimeToFeedback() *float64 {
+	if m == nil {
+		return nil
+	}
+	return m.TimeToFeedback
+}
+
+func (m *Metrics) GetUserInteractionTime() *float64 {
+	if m == nil {
+		return nil
+	}
+	return m.UserInteractionTime
+}
+
+func (m *Metrics) GetFeedbackSessionID() *string {
+	if m == nil {
+		return nil
+	}
+	return m.FeedbackSessionID
+}
+
+func (m *Metrics) GetUserAgent() *string {
+	if m == nil {
+		return nil
+	}
+	return m.UserAgent
+}
+
+func (m *Metrics) GetPlatform() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Platform
+}
+
 // MessageFeedback - Comprehensive feedback on an AI response. Feedback helps improve
 // the AI's performance and response quality over time.
 type MessageFeedback struct {
 	// Overall helpfulness rating
 	IsHelpful *bool    `json:"isHelpful,omitzero"`
 	Ratings   *Ratings `json:"ratings,omitzero"`
-	// Categories of issues identified
+	// Categories of issues or positive attributes identified
 	Categories []Category `json:"categories,omitzero"`
 	Comments   *Comments  `json:"comments,omitzero"`
 	// Feedback on individual citations
 	CitationFeedback []CitationFeedback `json:"citationFeedback,omitzero"`
 	// Were the suggested follow-up questions helpful
 	FollowUpQuestionsHelpful *bool `json:"followUpQuestionsHelpful,omitzero"`
+	// Follow-up questions that were suggested but not used by the user
+	UnusedFollowUpQuestions []string `json:"unusedFollowUpQuestions,omitzero"`
+	// Origin of the feedback. Always present in responses (server applies the default `user`).
+	Source *Source `default:"user" json:"source"`
+	// User who submitted the feedback
+	FeedbackProvider *string `json:"feedbackProvider,omitzero"`
+	// Time the feedback was created, stored as a Number (epoch milliseconds)
+	// with a server-side default of `Date.now`, so always present in responses.
+	// Not an ISO 8601 datetime.
+	//
+	Timestamp *int64 `json:"timestamp,omitzero"`
+	// Audit trail of edits to this feedback entry
+	Revisions []Revision `json:"revisions,omitzero"`
+	// Optional telemetry captured alongside the feedback
+	Metrics *Metrics `json:"metrics,omitzero"`
 }
 
 func (m MessageFeedback) MarshalJSON() ([]byte, error) {
@@ -204,4 +360,46 @@ func (m *MessageFeedback) GetFollowUpQuestionsHelpful() *bool {
 		return nil
 	}
 	return m.FollowUpQuestionsHelpful
+}
+
+func (m *MessageFeedback) GetUnusedFollowUpQuestions() []string {
+	if m == nil {
+		return nil
+	}
+	return m.UnusedFollowUpQuestions
+}
+
+func (m *MessageFeedback) GetSource() *Source {
+	if m == nil {
+		return nil
+	}
+	return m.Source
+}
+
+func (m *MessageFeedback) GetFeedbackProvider() *string {
+	if m == nil {
+		return nil
+	}
+	return m.FeedbackProvider
+}
+
+func (m *MessageFeedback) GetTimestamp() *int64 {
+	if m == nil {
+		return nil
+	}
+	return m.Timestamp
+}
+
+func (m *MessageFeedback) GetRevisions() []Revision {
+	if m == nil {
+		return nil
+	}
+	return m.Revisions
+}
+
+func (m *MessageFeedback) GetMetrics() *Metrics {
+	if m == nil {
+		return nil
+	}
+	return m.Metrics
 }

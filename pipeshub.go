@@ -2,7 +2,7 @@
 
 package pipeshub
 
-// Generated from OpenAPI doc version 1.0.0 and generator version 2.824.1
+// Generated from OpenAPI doc version 1.0.0 and generator version 2.846.1
 
 import (
 	"context"
@@ -65,72 +65,19 @@ func Pointer[T any](v T) *T { return &v }
 // ## Authentication
 // Most endpoints require JWT Bearer token authentication. Some internal endpoints use scoped tokens for service-to-service communication.
 //
+// **OAuth 2.0 Bearer tokens** from `POST /oauth2/token` use the same `Authorization: Bearer` header. For **`client_credentials`**, machine tokens may encode `userId === client_id` in the JWT; the **Node API gateway** resolves the OAuth **app creator**, sets the authenticated user accordingly, and forwards **`x-oauth-user-id`** to Python services on proxied calls. Do not send **`x-oauth-user-id`** yourself—the gateway removes untrusted values on ingress. See the **OAuth Provider** tag for full behavior.
+//
 // ## Base URLs
 // All endpoints use the `/api/v1` prefix unless otherwise noted.
 type Pipeshub struct {
 	SDKVersion             string
 	UserAccount            *UserAccount
-	Oauth                  *Oauth
-	OauthProvider          *OauthProvider
-	OpenIDConnect          *OpenIDConnect
-	OauthApps              *OauthApps
 	OrganizationAuthConfig *OrganizationAuthConfig
-	Saml                   *Saml
-	// User management operations
-	Users *Users
-	// Team management operations
-	Teams *Teams
-	// Organization management operations
-	Organizations      *Organizations
-	UserGroups         *UserGroups
-	DocumentManagement *DocumentManagement
-	KnowledgeBases     *KnowledgeBases
-	// Record management and operations
-	Records *Records
-	// Folder organization and management
-	Folders *Folders
-	// File upload operations
-	Upload *Upload
-	// Connector-related operations
-	Connector  *Connector
-	Connectors *Connectors
-	// Permission management for knowledge bases
-	Permissions *Permissions
-	// AI-powered conversational chat management with citations and follow-up questions
-	Conversations  *Conversations
-	SemanticSearch *SemanticSearch
-	AgentTemplates *AgentTemplates
-	// Custom AI agents with specialized capabilities and tool integrations
-	Agents                      *Agents
-	AgentConversations          *AgentConversations
-	ConnectorRegistry           *ConnectorRegistry
-	ConnectorInstances          *ConnectorInstances
-	ConnectorConfiguration      *ConnectorConfiguration
-	ConnectorControl            *ConnectorControl
-	ConnectorOAuth              *ConnectorOAuth
-	ConnectorFilters            *ConnectorFilters
-	ToolsetRegistry             *ToolsetRegistry
-	Toolsets                    *Toolsets
-	ToolsetInstances            *ToolsetInstances
-	ToolsetConfiguration        *ToolsetConfiguration
-	ToolsetConfigurations       *ToolsetConfigurations
-	ToolsetOAuth                *ToolsetOAuth
-	OauthConfiguration          *OauthConfiguration
-	OauthConfigurations         *OauthConfigurations
-	OauthConfigs                *OauthConfigs
-	StorageConfiguration        *StorageConfiguration
-	SMTPConfiguration           *SMTPConfiguration
-	AuthenticationConfiguration *AuthenticationConfiguration
-	AuthConfig                  *AuthConfig
-	AuthConfigurations          *AuthConfigurations
-	AiModelsProviders           *AiModelsProviders
-	PublicUrls                  *PublicUrls1
-	PublicURLs                  *PublicURLs2
-	PlatformSettings            *PlatformSettings
-	MetricsCollection           *MetricsCollection
-	ConfigurationManager        *ConfigurationManager
-	CrawlingJobs                *CrawlingJobs
-	Mcp                         *Mcp
+	Organizations          *Organizations
+	KnowledgeHub           *KnowledgeHub
+	Conversations          *Conversations
+	SemanticSearch         *SemanticSearch
+	AIModelsProviders      *AIModelsProviders
 
 	sdkConfiguration config.SDKConfiguration
 	hooks            *hooks.Hooks
@@ -138,7 +85,7 @@ type Pipeshub struct {
 
 type SDKOption func(*Pipeshub)
 
-// WithServerURL allows the overriding of the default server URL
+// WithServerURL allows providing an alternative server URL
 func WithServerURL(serverURL string) SDKOption {
 	return func(sdk *Pipeshub) {
 		sdk.sdkConfiguration.ServerURL = serverURL
@@ -219,9 +166,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "0.1.2",
+		SDKVersion: "0.2.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.2 2.824.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 0.2.0 2.846.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
@@ -253,57 +200,12 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.sdkConfiguration = sdk.hooks.SDKInit(sdk.sdkConfiguration)
 
 	sdk.UserAccount = newUserAccount(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Oauth = newOauth(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.OauthProvider = newOauthProvider(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.OpenIDConnect = newOpenIDConnect(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.OauthApps = newOauthApps(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.OrganizationAuthConfig = newOrganizationAuthConfig(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Saml = newSaml(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Users = newUsers(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Teams = newTeams(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Organizations = newOrganizations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.UserGroups = newUserGroups(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.DocumentManagement = newDocumentManagement(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.KnowledgeBases = newKnowledgeBases(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Records = newRecords(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Folders = newFolders(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Upload = newUpload(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Connector = newConnector(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Connectors = newConnectors(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Permissions = newPermissions(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.KnowledgeHub = newKnowledgeHub(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.AgentTemplates = newAgentTemplates(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.AgentConversations = newAgentConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConnectorRegistry = newConnectorRegistry(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConnectorInstances = newConnectorInstances(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConnectorConfiguration = newConnectorConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConnectorControl = newConnectorControl(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConnectorOAuth = newConnectorOAuth(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConnectorFilters = newConnectorFilters(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ToolsetRegistry = newToolsetRegistry(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Toolsets = newToolsets(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ToolsetInstances = newToolsetInstances(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ToolsetConfiguration = newToolsetConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ToolsetConfigurations = newToolsetConfigurations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ToolsetOAuth = newToolsetOAuth(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.OauthConfiguration = newOauthConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.OauthConfigurations = newOauthConfigurations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.OauthConfigs = newOauthConfigs(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.StorageConfiguration = newStorageConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.SMTPConfiguration = newSMTPConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.AuthenticationConfiguration = newAuthenticationConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.AuthConfig = newAuthConfig(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.AuthConfigurations = newAuthConfigurations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.AiModelsProviders = newAiModelsProviders(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.PublicUrls = newPublicUrls1(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.PublicURLs = newPublicURLs2(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.PlatformSettings = newPlatformSettings(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.MetricsCollection = newMetricsCollection(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.ConfigurationManager = newConfigurationManager(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.CrawlingJobs = newCrawlingJobs(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Mcp = newMcp(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.AIModelsProviders = newAIModelsProviders(sdk, sdk.sdkConfiguration, sdk.hooks)
 
 	return sdk
 }

@@ -3,13 +3,73 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
+// DeleteSearchByIDShared - Additional `isShared` filter (`'true'` / `'false'`). The row is
+// only deleted if it also matches this value.
+type DeleteSearchByIDShared string
+
+const (
+	DeleteSearchByIDSharedTrue  DeleteSearchByIDShared = "true"
+	DeleteSearchByIDSharedFalse DeleteSearchByIDShared = "false"
+)
+
+func (e DeleteSearchByIDShared) ToPointer() *DeleteSearchByIDShared {
+	return &e
+}
+func (e *DeleteSearchByIDShared) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		*e = DeleteSearchByIDShared(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for DeleteSearchByIDShared: %v", v)
+	}
+}
+
 type DeleteSearchByIDRequest struct {
-	// Unique search identifier
+	// ObjectId of the persisted search row to delete.
 	SearchID string `pathParam:"style=simple,explode=false,name=searchId"`
+	// Additional substring filter against `title` / `messages.content`.
+	// The row is only deleted if the `searchId` row also matches this
+	// filter; otherwise `404`. Special regex characters are escaped;
+	// values over 1000 chars or tripping the XSS guard yield `400`.
+	//
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Additional `isShared` filter (`'true'` / `'false'`). The row is
+	// only deleted if it also matches this value.
+	//
+	Shared *DeleteSearchByIDShared `queryParam:"style=form,explode=true,name=shared"`
+	// ISO 8601 lower bound for `createdAt`. The row is only deleted
+	// if its `createdAt` is on or after this value.
+	//
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 upper bound for `createdAt`. The row is only deleted
+	// if its `createdAt` is on or before this value.
+	//
+	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
+}
+
+func (d DeleteSearchByIDRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
+}
+
+func (d *DeleteSearchByIDRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *DeleteSearchByIDRequest) GetSearchID() string {
@@ -19,21 +79,49 @@ func (d *DeleteSearchByIDRequest) GetSearchID() string {
 	return d.SearchID
 }
 
-// DeleteSearchByIDResponseBody - Search deleted successfully
-type DeleteSearchByIDResponseBody struct {
-	Message *string `json:"message,omitzero"`
-}
-
-func (d *DeleteSearchByIDResponseBody) GetMessage() *string {
+func (d *DeleteSearchByIDRequest) GetSearch() *string {
 	if d == nil {
 		return nil
+	}
+	return d.Search
+}
+
+func (d *DeleteSearchByIDRequest) GetShared() *DeleteSearchByIDShared {
+	if d == nil {
+		return nil
+	}
+	return d.Shared
+}
+
+func (d *DeleteSearchByIDRequest) GetStartDate() *time.Time {
+	if d == nil {
+		return nil
+	}
+	return d.StartDate
+}
+
+func (d *DeleteSearchByIDRequest) GetEndDate() *time.Time {
+	if d == nil {
+		return nil
+	}
+	return d.EndDate
+}
+
+// DeleteSearchByIDResponseBody - Search deleted successfully.
+type DeleteSearchByIDResponseBody struct {
+	Message string `json:"message"`
+}
+
+func (d *DeleteSearchByIDResponseBody) GetMessage() string {
+	if d == nil {
+		return ""
 	}
 	return d.Message
 }
 
 type DeleteSearchByIDResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Search deleted successfully
+	// Search deleted successfully.
 	Object *DeleteSearchByIDResponseBody
 }
 

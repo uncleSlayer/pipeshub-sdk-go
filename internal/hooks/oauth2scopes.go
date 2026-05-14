@@ -6,6 +6,7 @@ package hooks
 // OAuth 2.0 authentication with fine-grained scopes.
 // Supports authorization_code (with PKCE) and client_credentials flows.
 // OAuth tokens are Bearer JWTs — use the same Authorization header as regular tokens.
+// For **client_credentials**, machine JWTs may use `userId === client_id`; the Node gateway resolves the OAuth app creator and forwards **`x-oauth-user-id`** to Python where applicable — see **OAuth Provider** tag.
 type OAuth2Scope string
 
 const (
@@ -111,15 +112,6 @@ const (
 
 	// Update system configuration
 	OAuth2ScopeConfigWrite OAuth2Scope = "config:write"
-
-	// Read documents
-	OAuth2ScopeDocumentRead OAuth2Scope = "document:read"
-
-	// Upload and update documents
-	OAuth2ScopeDocumentWrite OAuth2Scope = "document:write"
-
-	// Delete documents
-	OAuth2ScopeDocumentDelete OAuth2Scope = "document:delete"
 
 	// Read crawling jobs
 	OAuth2ScopeCrawlRead OAuth2Scope = "crawl:read"

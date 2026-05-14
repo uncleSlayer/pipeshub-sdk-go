@@ -3,11 +3,15 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
 type ArchiveConversationRequest struct {
+	// Conversation identifier
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
 }
 
@@ -18,10 +22,134 @@ func (a *ArchiveConversationRequest) GetConversationID() string {
 	return a.ConversationID
 }
 
+// ArchiveConversationStatus - New archive status of the conversation
+type ArchiveConversationStatus string
+
+const (
+	ArchiveConversationStatusArchived ArchiveConversationStatus = "archived"
+)
+
+func (e ArchiveConversationStatus) ToPointer() *ArchiveConversationStatus {
+	return &e
+}
+func (e *ArchiveConversationStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "archived":
+		*e = ArchiveConversationStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ArchiveConversationStatus: %v", v)
+	}
+}
+
+type ArchiveConversationMeta struct {
+	// Request correlation identifier
+	RequestID *string `json:"requestId,omitzero"`
+	// Response generation timestamp
+	Timestamp *time.Time `json:"timestamp,omitzero"`
+	// Server processing time in milliseconds
+	Duration *int64 `json:"duration,omitzero"`
+}
+
+func (a ArchiveConversationMeta) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *ArchiveConversationMeta) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *ArchiveConversationMeta) GetRequestID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.RequestID
+}
+
+func (a *ArchiveConversationMeta) GetTimestamp() *time.Time {
+	if a == nil {
+		return nil
+	}
+	return a.Timestamp
+}
+
+func (a *ArchiveConversationMeta) GetDuration() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.Duration
+}
+
+// ArchiveConversationResponseBody - Conversation archived successfully
+type ArchiveConversationResponseBody struct {
+	// Conversation identifier
+	ID *string `json:"id,omitzero"`
+	// New archive status of the conversation
+	Status *ArchiveConversationStatus `json:"status,omitzero"`
+	// User who archived the conversation
+	ArchivedBy *string `json:"archivedBy,omitzero"`
+	// Timestamp when the conversation was archived
+	ArchivedAt *time.Time               `json:"archivedAt,omitzero"`
+	Meta       *ArchiveConversationMeta `json:"meta,omitzero"`
+}
+
+func (a ArchiveConversationResponseBody) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *ArchiveConversationResponseBody) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *ArchiveConversationResponseBody) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
+}
+
+func (a *ArchiveConversationResponseBody) GetStatus() *ArchiveConversationStatus {
+	if a == nil {
+		return nil
+	}
+	return a.Status
+}
+
+func (a *ArchiveConversationResponseBody) GetArchivedBy() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ArchivedBy
+}
+
+func (a *ArchiveConversationResponseBody) GetArchivedAt() *time.Time {
+	if a == nil {
+		return nil
+	}
+	return a.ArchivedAt
+}
+
+func (a *ArchiveConversationResponseBody) GetMeta() *ArchiveConversationMeta {
+	if a == nil {
+		return nil
+	}
+	return a.Meta
+}
+
 type ArchiveConversationResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Conversation archived successfully
-	Conversation *components.Conversation
+	Object *ArchiveConversationResponseBody
 }
 
 func (a ArchiveConversationResponse) MarshalJSON() ([]byte, error) {
@@ -42,9 +170,9 @@ func (a *ArchiveConversationResponse) GetHTTPMeta() components.HTTPMetadata {
 	return a.HTTPMeta
 }
 
-func (a *ArchiveConversationResponse) GetConversation() *components.Conversation {
+func (a *ArchiveConversationResponse) GetObject() *ArchiveConversationResponseBody {
 	if a == nil {
 		return nil
 	}
-	return a.Conversation
+	return a.Object
 }

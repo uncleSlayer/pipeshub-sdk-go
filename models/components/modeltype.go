@@ -2,46 +2,32 @@
 
 package components
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 // ModelType - Type of AI model
 type ModelType string
 
 const (
-	ModelTypeLlm        ModelType = "llm"
-	ModelTypeEmbedding  ModelType = "embedding"
-	ModelTypeOcr        ModelType = "ocr"
-	ModelTypeSlm        ModelType = "slm"
-	ModelTypeReasoning  ModelType = "reasoning"
-	ModelTypeMultiModal ModelType = "multiModal"
+	ModelTypeLlm             ModelType = "llm"
+	ModelTypeEmbedding       ModelType = "embedding"
+	ModelTypeOcr             ModelType = "ocr"
+	ModelTypeSlm             ModelType = "slm"
+	ModelTypeReasoning       ModelType = "reasoning"
+	ModelTypeMultiModal      ModelType = "multiModal"
+	ModelTypeImageGeneration ModelType = "imageGeneration"
+	ModelTypeTts             ModelType = "tts"
+	ModelTypeStt             ModelType = "stt"
 )
 
 func (e ModelType) ToPointer() *ModelType {
 	return &e
 }
-func (e *ModelType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ModelType) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "llm", "embedding", "ocr", "slm", "reasoning", "multiModal", "imageGeneration", "tts", "stt":
+			return true
+		}
 	}
-	switch v {
-	case "llm":
-		fallthrough
-	case "embedding":
-		fallthrough
-	case "ocr":
-		fallthrough
-	case "slm":
-		fallthrough
-	case "reasoning":
-		fallthrough
-	case "multiModal":
-		*e = ModelType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for ModelType: %v", v)
-	}
+	return false
 }

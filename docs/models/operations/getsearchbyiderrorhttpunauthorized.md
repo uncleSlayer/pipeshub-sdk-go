@@ -1,0 +1,9 @@
+# GetSearchByIDErrorHTTPUnauthorized
+
+
+## Fields
+
+| Field                                                                                                               | Type                                                                                                                | Required                                                                                                            | Description                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `Code`                                                                                                              | [operations.GetSearchByIDUnauthorizedCode](../../models/operations/getsearchbyidunauthorizedcode.md)                | :heavy_check_mark:                                                                                                  | Machine-readable error code. `HTTP_UNAUTHORIZED`<br/>is emitted when the bearer token is missing,<br/>invalid, or expired.<br/> |
+| `Message`                                                                                                           | *string*                                                                                                            | :heavy_check_mark:                                                                                                  | Human-readable description of the failure.                                                                          |

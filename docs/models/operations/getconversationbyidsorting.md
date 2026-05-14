@@ -1,0 +1,11 @@
+# GetConversationByIDSorting
+
+Sort applied to the conversation list. Field set echoes back the original list-endpoint sort options even though this endpoint returns a single conversation.
+
+
+## Fields
+
+| Field                                                                                                             | Type                                                                                                              | Required                                                                                                          | Description                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `SortBy`                                                                                                          | [*operations.GetConversationByIDSortingSortBy](../../models/operations/getconversationbyidsortingsortby.md)       | :heavy_minus_sign:                                                                                                | N/A                                                                                                               |
+| `SortOrder`                                                                                                       | [*operations.GetConversationByIDSortingSortOrder](../../models/operations/getconversationbyidsortingsortorder.md) | :heavy_minus_sign:                                                                                                | N/A                                                                                                               |

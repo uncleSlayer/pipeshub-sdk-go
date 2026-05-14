@@ -1,9 +1,0 @@
-# GetConnectorRegistryResponse
-
-
-## Fields
-
-| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
-| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
-| `Object`                                                                                                    | [*operations.GetConnectorRegistryResponseBody](../../models/operations/getconnectorregistryresponsebody.md) | :heavy_minus_sign:                                                                                          | Connector registry retrieved                                                                                |

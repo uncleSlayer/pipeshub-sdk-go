@@ -5,62 +5,15 @@ package operations
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
 )
-
-// RegenerateAnswerRequestBody - Request payload
-type RegenerateAnswerRequestBody struct {
-	Filters *components.Filters `json:"filters,omitzero"`
-	// Override model for regeneration
-	ModelKey  *string `json:"modelKey,omitzero"`
-	ModelName *string `json:"modelName,omitzero"`
-	ChatMode  *string `json:"chatMode,omitzero"`
-}
-
-func (r RegenerateAnswerRequestBody) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(r, "", false)
-}
-
-func (r *RegenerateAnswerRequestBody) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *RegenerateAnswerRequestBody) GetFilters() *components.Filters {
-	if r == nil {
-		return nil
-	}
-	return r.Filters
-}
-
-func (r *RegenerateAnswerRequestBody) GetModelKey() *string {
-	if r == nil {
-		return nil
-	}
-	return r.ModelKey
-}
-
-func (r *RegenerateAnswerRequestBody) GetModelName() *string {
-	if r == nil {
-		return nil
-	}
-	return r.ModelName
-}
-
-func (r *RegenerateAnswerRequestBody) GetChatMode() *string {
-	if r == nil {
-		return nil
-	}
-	return r.ChatMode
-}
 
 type RegenerateAnswerRequest struct {
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
 	// ID of the message to regenerate response for
 	MessageID string `pathParam:"style=simple,explode=false,name=messageId"`
 	// Request payload
-	Body *RegenerateAnswerRequestBody `request:"mediaType=application/json"`
+	Body *components.RegenerateRequest `request:"mediaType=application/json"`
 }
 
 func (r RegenerateAnswerRequest) MarshalJSON() ([]byte, error) {
@@ -88,7 +41,7 @@ func (r *RegenerateAnswerRequest) GetMessageID() string {
 	return r.MessageID
 }
 
-func (r *RegenerateAnswerRequest) GetBody() *RegenerateAnswerRequestBody {
+func (r *RegenerateAnswerRequest) GetBody() *components.RegenerateRequest {
 	if r == nil {
 		return nil
 	}
@@ -97,19 +50,52 @@ func (r *RegenerateAnswerRequest) GetBody() *RegenerateAnswerRequestBody {
 
 type RegenerateAnswerResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Response regenerated successfully
-	Conversation *components.Conversation
-}
-
-func (r RegenerateAnswerResponse) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(r, "", false)
-}
-
-func (r *RegenerateAnswerResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
-		return err
-	}
-	return nil
+	// SSE stream established. The body is a sequence of
+	// `text/event-stream` frames using the event vocabulary described
+	// on `SSEEvent`. The exact subset of events emitted depends on
+	// `chatMode` (see the route description for routing rules).
+	//
+	// Lifecycle (all event names are sent verbatim on the wire):
+	// - `connected` — `{ "message": "SSE connection established" }`.
+	//   Fired once on connection by the API layer.
+	// - `status` — progress messages from the AI backend. Possible
+	//   `status` sub-values include `started`, `transforming`,
+	//   `searching`, `processing`, `checking_tools`,
+	//   `generating_answer`, `generating`, `analyzing`, `evaluating`,
+	//   `planning`, `executing`, `retrying`, `continuing`, `success`,
+	//   `skipped`, `pending`, `keepalive`, `cascade_error`, and
+	//   backend-defined values that may be added over time.
+	// - `answer_chunk` — incremental token batches with running
+	//   `accumulated` text, accumulated `citations`, and the
+	//   backend-supplied `confidence` (typically null until the final
+	//   chunk).
+	// - `tool_calls` / `tool_call` / `tool_success` / `tool_error` —
+	//   emitted when the model invokes tools (agent chat modes, or the
+	//   non-agent path when SQL / record-fetch tools are configured).
+	// - `tool_result` / `tool_execution_complete` — additional tool
+	//   lifecycle events emitted only on the agent-mode path.
+	// - `restreaming` — emitted when the LLM is restarted with new
+	//   context (e.g. before a citation-verification pass or
+	//   reflection-driven retry).
+	// - `metadata` — `{}` keep-alive emitted by the JSON-streaming
+	//   branch while waiting for the next safe-to-flush chunk.
+	// - `complete` — `{ "conversation": Conversation, "recordsUsed":
+	//   number, "meta": { "requestId": string, "timestamp": string,
+	//   "duration": number, "recordsUsed": number } }`. Fired once
+	//   after the regeneration is persisted; the new bot response
+	//   replaces the previous one in `conversation.messages` at the
+	//   same index. The AI backend's own `complete` frame is consumed
+	//   server-side and is **not** forwarded — clients see only this
+	//   server-defined frame.
+	// - `error` — `{ "error": string, "details"?: string }`. Fired if
+	//   the stream fails; the previous bot response is replaced with an
+	//   error message and the conversation row is marked FAILED before
+	//   close.
+	//
+	// Clients should ignore unknown event names rather than treating
+	// them as errors.
+	//
+	SSEEvent *stream.EventStream[components.SSEEvent]
 }
 
 func (r *RegenerateAnswerResponse) GetHTTPMeta() components.HTTPMetadata {
@@ -119,9 +105,9 @@ func (r *RegenerateAnswerResponse) GetHTTPMeta() components.HTTPMetadata {
 	return r.HTTPMeta
 }
 
-func (r *RegenerateAnswerResponse) GetConversation() *components.Conversation {
+func (r *RegenerateAnswerResponse) GetSSEEvent() *stream.EventStream[components.SSEEvent] {
 	if r == nil {
 		return nil
 	}
-	return r.Conversation
+	return r.SSEEvent
 }

@@ -1,25 +1,10 @@
 # Error
 
-Error code. Common values:
-- `invalid_request` - Missing or invalid parameter
-- `invalid_client` - Client authentication failed
-- `invalid_grant` - Invalid authorization code or refresh token
-- `unauthorized_client` - Client not authorized for this grant type
-- `unsupported_grant_type` - Grant type not supported
-- `invalid_scope` - Requested scope is invalid or exceeds allowed
-- `access_denied` - User denied authorization
 
+## Fields
 
-
-## Values
-
-| Name                        | Value                       |
-| --------------------------- | --------------------------- |
-| `ErrorInvalidRequest`       | invalid_request             |
-| `ErrorInvalidClient`        | invalid_client              |
-| `ErrorInvalidGrant`         | invalid_grant               |
-| `ErrorUnauthorizedClient`   | unauthorized_client         |
-| `ErrorUnsupportedGrantType` | unsupported_grant_type      |
-| `ErrorInvalidScope`         | invalid_scope               |
-| `ErrorAccessDenied`         | access_denied               |
-| `ErrorServerError`          | server_error                |
+| Field                                                                                                                                                                    | Type                                                                                                                                                                     | Required                                                                                                                                                                 | Description                                                                                                                                                              | Example                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Code`                                                                                                                                                                   | *string*                                                                                                                                                                 | :heavy_check_mark:                                                                                                                                                       | Machine-readable error code. For application errors it takes the form `HTTP_<VARIANT>`<br/>For unhandled runtime errors (e.g. database unavailable) it is `INTERNAL_ERROR`.<br/> | HTTP_BAD_REQUEST                                                                                                                                                         |
+| `Message`                                                                                                                                                                | *string*                                                                                                                                                                 | :heavy_check_mark:                                                                                                                                                       | Human-readable description of the error                                                                                                                                  | Admin access required                                                                                                                                                    |
+| `Metadata`                                                                                                                                                               | map[string]*any*                                                                                                                                                         | :heavy_minus_sign:                                                                                                                                                       | Additional context (only present in development environments)                                                                                                            |                                                                                                                                                                          |

@@ -18,7 +18,6 @@ import (
 	"net/url"
 )
 
-// Conversations - AI-powered conversational chat management with citations and follow-up questions
 type Conversations struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration
@@ -33,273 +32,54 @@ func newConversations(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 	}
 }
 
-// Create a new AI conversation
-// Start a new conversation with PipesHub's AI assistant.<br><br>
-// <b>Overview:</b><br>
-// This endpoint creates a new conversation session and processes the initial query.
-// The AI searches your organization's knowledge bases for relevant information and
-// generates a response with citations to source documents.<br><br>
-// <b>How It Works:</b><br>
-// <ol>
-// <li>Your query is analyzed and converted to semantic embeddings</li>
-// <li>Relevant content is retrieved from indexed knowledge bases</li>
-// <li>The AI generates a response using the retrieved context</li>
-// <li>Citations link back to source documents for verification</li>
-// <li>Follow-up questions are suggested based on the conversation</li>
-// </ol>
-// <b>Filtering Options:</b><br>
-// <ul>
-// <li><b>recordIds:</b> Limit search to specific documents</li>
-// <li><b>filters.apps:</b> Search only specific connector apps</li>
-// <li><b>filters.kb:</b> Search only specific knowledge bases</li>
-// </ul>
-// <b>Model Selection:</b><br>
-// Use <code>modelKey</code> to select different AI models configured for your organization.
-// Each model may have different capabilities, speed, and accuracy trade-offs.
-func (s *Conversations) Create(ctx context.Context, request components.CreateConversationRequest, opts ...operations.Option) (*operations.CreateConversationResponse, error) {
-	o := operations.Options{}
-	supportedOptions := []string{
-		operations.SupportedOptionRetries,
-		operations.SupportedOptionTimeout,
-	}
-
-	for _, opt := range opts {
-		if err := opt(&o, supportedOptions...); err != nil {
-			return nil, fmt.Errorf("error applying option: %w", err)
-		}
-	}
-
-	var baseURL string
-	if o.ServerURL == nil {
-		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
-	} else {
-		baseURL = *o.ServerURL
-	}
-	opURL, err := url.JoinPath(baseURL, "/conversations/create")
-	if err != nil {
-		return nil, fmt.Errorf("error generating URL: %w", err)
-	}
-
-	hookCtx := hooks.HookContext{
-		SDK:              s.rootSDK,
-		SDKConfiguration: s.sdkConfiguration,
-		BaseURL:          baseURL,
-		Context:          ctx,
-		OperationID:      "createConversation",
-		OAuth2Scopes:     []string{"conversation:write"},
-		SecuritySource:   s.sdkConfiguration.Security,
-	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
-	if err != nil {
-		return nil, err
-	}
-
-	timeout := o.Timeout
-	if timeout == nil {
-		timeout = s.sdkConfiguration.Timeout
-	}
-
-	if timeout != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
-	if reqContentType != "" {
-		req.Header.Set("Content-Type", reqContentType)
-	}
-
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
-		return nil, err
-	}
-
-	for k, v := range o.SetHeaders {
-		req.Header.Set(k, v)
-	}
-
-	globalRetryConfig := s.sdkConfiguration.RetryConfig
-	retryConfig := o.Retries
-	if retryConfig == nil {
-		if globalRetryConfig != nil {
-			retryConfig = globalRetryConfig
-		}
-	}
-
-	var httpRes *http.Response
-	if retryConfig != nil {
-		httpRes, err = utils.Retry(ctx, utils.Retries{
-			Config: retryConfig,
-			StatusCodes: []string{
-				"429",
-				"500",
-				"502",
-				"503",
-				"504",
-			},
-		}, func() (*http.Response, error) {
-			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
-				copyBody, err := req.GetBody()
-
-				if err != nil {
-					return nil, err
-				}
-
-				req.Body = copyBody
-			}
-
-			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-			if err != nil {
-				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
-					return nil, err
-				}
-
-				return nil, retry.Permanent(err)
-			}
-
-			httpRes, err := s.sdkConfiguration.Client.Do(req)
-			if err != nil || httpRes == nil {
-				if err != nil {
-					err = fmt.Errorf("error sending request: %w", err)
-				} else {
-					err = fmt.Errorf("error sending request: no response")
-				}
-
-				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			}
-			return httpRes, err
-		})
-
-		if err != nil {
-			return nil, err
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-		if err != nil {
-			return nil, err
-		}
-
-		httpRes, err = s.sdkConfiguration.Client.Do(req)
-		if err != nil || httpRes == nil {
-			if err != nil {
-				err = fmt.Errorf("error sending request: %w", err)
-			} else {
-				err = fmt.Errorf("error sending request: no response")
-			}
-
-			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "502", "504", "5XX"}, httpRes.StatusCode) {
-			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
-			if err != nil {
-				return nil, err
-			} else if _httpRes != nil {
-				httpRes = _httpRes
-			}
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	res := &operations.CreateConversationResponse{
-		HTTPMeta: components.HTTPMetadata{
-			Request:  req,
-			Response: httpRes,
-		},
-	}
-
-	switch {
-	case httpRes.StatusCode == 201:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out components.Conversation
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.Conversation = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 400:
-		fallthrough
-	case httpRes.StatusCode == 401:
-		fallthrough
-	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	case httpRes.StatusCode == 502:
-		fallthrough
-	case httpRes.StatusCode == 504:
-		fallthrough
-	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	default:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
-	}
-
-	return res, nil
-
-}
-
-// Stream - Create conversation with streaming response
-// Start a new conversation with real-time streaming response using Server-Sent Events (SSE).<br><br>
-// <b>Overview:</b><br>
-// This endpoint works like <code>/conversations/create</code> but streams the AI response
-// in real-time as it's generated, providing a more interactive user experience.<br><br>
-// <b>SSE Event Types:</b><br>
-// <ul>
-// <li><code>connected</code> - Connection established, processing started</li>
-// <li><code>chunk</code> - Partial response text (stream these to show typing effect)</li>
-// <li><code>citation</code> - Citation reference found during generation</li>
-// <li><code>complete</code> - Final message with full response, citations, and follow-up questions</li>
-// <li><code>error</code> - Error occurred during processing</li>
-// </ul>
-// <b>Client Implementation:</b><br>
-// <code>
-// const eventSource = new EventSource('/conversations/stream');<br>
-// eventSource.onmessage = (event) => {<br>
-// &nbsp;&nbsp;const data = JSON.parse(event.data);<br>
-// &nbsp;&nbsp;// Handle different event types<br>
-// };
-// </code><br><br>
-// <b>Error Handling:</b><br>
-// If an error occurs mid-stream, an <code>error</code> event is sent and the stream closes.
-// The conversation is marked as FAILED with the error reason stored.
-func (s *Conversations) Stream(ctx context.Context, request components.CreateConversationRequest, opts ...operations.Option) (*operations.StreamChatResponse, error) {
+// StreamChat - Create conversation with streaming response
+// Start a new conversation and stream the AI response over Server-Sent
+// Events (SSE). Behaves like `POST /conversations` but emits tokens,
+// tool activity, and status updates incrementally instead of returning
+// a single JSON response at the end.
+//
+// **Lifecycle**
+//
+//  1. The server validates `query`, persists an in-progress
+//     conversation, then opens the SSE stream with HTTP `200`.
+//  2. A `connected` event is emitted immediately with the new
+//     `conversationId` so the client can link the stream (sidebar,
+//     parallel tabs, deep links) without an extra request.
+//  3. AI-backend events stream through (token chunks, tool calls,
+//     status, etc.).
+//  4. On success a single `complete` event is emitted carrying the
+//     full persisted conversation.
+//  5. On failure an `error` event is emitted and the conversation is
+//     marked FAILED before the stream closes.
+//
+// **Event vocabulary**
+//
+// Three events have stable, server-defined `data` shapes:
+//
+//   - `connected` — `{ "message": string, "conversationId": string,
+//     "title": string }`
+//   - `complete` — `{ "conversation": Conversation,
+//     "meta": { "requestId": string, "timestamp": string,
+//     "duration": number } }`
+//   - `error` — `{ "error": string, "details"?: string }`
+//
+// The forwarded events are `status`, `answer_chunk`, `tool_calls`,
+// `restreaming`, `metadata`, and `tool_execution_complete`. Their
+// payloads come from the Python query service and may evolve. Note
+// that raw `tool_call` / `tool_success` / `tool_error` / `tool_result`
+// events emitted by the LLM tool runtime are rewrapped as `status` by
+// the upstream wrapper before they reach this route, so clients on
+// `/conversations/stream` never see those names directly. Clients
+// should ignore unknown event names rather than treating them as
+// errors.
+//
+// **Agent mode**
+//
+// When `chatMode` selects an agent mode (for example `agent:auto`),
+// the optional `tools` list restricts which tools the agent may
+// invoke for this turn. Outside agent modes the `tools` field is
+// ignored.
+func (s *Conversations) StreamChat(ctx context.Context, request components.CreateConversationRequest, opts ...operations.Option) (*operations.StreamChatResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -442,7 +222,7 @@ func (s *Conversations) Stream(ctx context.Context, request components.CreateCon
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "502", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -468,14 +248,14 @@ func (s *Conversations) Stream(ctx context.Context, request components.CreateCon
 	case httpRes.StatusCode == 200:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/event-stream`):
-			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.SSEEvent, error) {
-				var e components.SSEEvent
+			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.AssistantStreamSSEEvent, error) {
+				var e components.AssistantStreamSSEEvent
 				if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(se), &e, ""); err != nil {
-					return components.SSEEvent{}, err
+					return components.AssistantStreamSSEEvent{}, err
 				}
 				return e, nil
 			}, "")
-			res.SSEEvent = out
+			res.AssistantStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -487,13 +267,15 @@ func (s *Conversations) Stream(ctx context.Context, request components.CreateCon
 		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	case httpRes.StatusCode == 502:
+	case httpRes.StatusCode == 500:
 		fallthrough
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -513,19 +295,26 @@ func (s *Conversations) Stream(ctx context.Context, request components.CreateCon
 
 }
 
-// List all conversations
-// Retrieve all conversations for the authenticated user.<br><br>
-// <b>Overview:</b><br>
-// Returns a list of all conversations owned by or shared with the current user.
-// Conversations are returned with their messages, status, and metadata.<br><br>
-// <b>Filtering:</b><br>
-// <ul>
-// <li>Only non-archived conversations are returned by default</li>
-// <li>Use <code>/conversations/show/archives</code> for archived conversations</li>
-// </ul>
-// <b>Sorting:</b><br>
-// Conversations are sorted by last activity timestamp (most recent first).
-func (s *Conversations) List(ctx context.Context, opts ...operations.Option) (*operations.GetAllConversationsResponse, error) {
+// GetAllConversations - List all conversations
+// Retrieve paginated conversations for the authenticated user.
+//
+// **Overview:**
+//
+// Use the optional `source` query parameter to choose which list to return:
+// `owned` — only conversations you own (`userId` matches the current user).
+// `shared` — conversations where you have recipient access
+// (`isShared` and your user appears in `sharedWith`), without the owner-only branch.
+// Defaults to `owned` when omitted. Each call returns one list; call twice if you need both.
+//
+// **Filtering:**
+//
+// - Only non-archived conversations are returned by default
+// - Use `/conversations/show/archives` for archived conversations
+//
+// **Sorting:**
+//
+// Conversations are sorted by last activity timestamp (most recent first) by default.
+func (s *Conversations) GetAllConversations(ctx context.Context, request operations.GetAllConversationsRequest, opts ...operations.Option) (*operations.GetAllConversationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -576,6 +365,10 @@ func (s *Conversations) List(ctx context.Context, opts ...operations.Option) (*o
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
 
 	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
@@ -661,7 +454,7 @@ func (s *Conversations) List(ctx context.Context, opts ...operations.Option) (*o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -705,6 +498,8 @@ func (s *Conversations) List(ctx context.Context, opts ...operations.Option) (*o
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
@@ -731,15 +526,26 @@ func (s *Conversations) List(ctx context.Context, opts ...operations.Option) (*o
 
 }
 
-// ListArchives - List archived conversations
-// Retrieve all archived conversations for the authenticated user.<br><br>
-// <b>Overview:</b><br>
+// GetArchivedConversations - List archived conversations
+// Retrieve all archived conversations for the authenticated user.
+//
+// **Overview:**
+//
 // Archived conversations are hidden from the main list but preserved for reference.
-// This endpoint returns only conversations where <code>isArchived: true</code>.<br><br>
-// <b>Unarchiving:</b><br>
-// Use <code>PATCH /conversations/{id}/unarchive</code> to restore a conversation
+// This endpoint returns only conversations where `isArchived: true` and `archivedBy`
+// is set. Results include conversations the caller owns and those shared with them.
+//
+// **Filtering and sorting:**
+//
+// Results can be narrowed using `search`, `shared`, `startDate`, `endDate`, and
+// `conversationId`. Sorting is controlled by `sortBy` and `sortOrder`. Pagination
+// is controlled by `page` and `limit`.
+//
+// **Unarchiving:**
+//
+// Use `PATCH /conversations/{conversationId}/unarchive` to restore a conversation
 // to the active list.
-func (s *Conversations) ListArchives(ctx context.Context, opts ...operations.Option) (*operations.GetArchivedConversationsResponse, error) {
+func (s *Conversations) GetArchivedConversations(ctx context.Context, request operations.GetArchivedConversationsRequest, opts ...operations.Option) (*operations.GetArchivedConversationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -790,6 +596,10 @@ func (s *Conversations) ListArchives(ctx context.Context, opts ...operations.Opt
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
 
 	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
@@ -945,22 +755,269 @@ func (s *Conversations) ListArchives(ctx context.Context, opts ...operations.Opt
 
 }
 
-// Get conversation by ID
-// Retrieve a specific conversation with its full message history.<br><br>
-// <b>Overview:</b><br>
+// SearchArchivedConversations - Search archived conversations
+// Search across all archived conversations (assistant and agent) for the authenticated user.
+//
+// **Overview:**
+//
+// Performs a case-insensitive substring match against conversation titles and message content
+// across both assistant (`Conversation`) and agent (`AgentConversation`) archived collections.
+// Results are merged server-side and sorted by `lastActivityAt` descending.
+//
+// **Search parameter:**
+//
+// The `search` query parameter is required, must be a non-empty string, and is capped at
+// 1000 characters. Requests that omit it or exceed the cap return `400`.
+//
+// **Pagination:**
+//
+// Results are paginated using `page` and `limit`. The response includes a `pagination`
+// block with total counts and a `summary` block that breaks matches down by source.
+//
+// **Item shape:**
+//
+// Each item is a conversation list entry (no `messages` payload — that field is omitted
+// for performance) tagged with `source`, plus computed `isOwner`, `accessLevel`,
+// `archivedAt`, and `archivedBy`. `agentKey` is present only when `source` is `agent`.
+func (s *Conversations) SearchArchivedConversations(ctx context.Context, search string, page *int64, limit *int64, opts ...operations.Option) (*operations.SearchArchivedConversationsResponse, error) {
+	request := operations.SearchArchivedConversationsRequest{
+		Search: search,
+		Page:   page,
+		Limit:  limit,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := url.JoinPath(baseURL, "/conversations/show/archives/search")
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "searchArchivedConversations",
+		OAuth2Scopes:     []string{"conversation:read"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", opURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.SearchArchivedConversationsResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out operations.SearchArchivedConversationsResponseBody
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.Object = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// GetConversationByID - Get conversation by ID
+// Retrieve a specific conversation with its full message history.
+//
+// **Overview:**
+//
 // Returns the complete conversation including all messages, citations,
-// feedback, and metadata. Messages can be paginated for long conversations.<br><br>
-// <b>Message Pagination:</b><br>
+// feedback, and metadata. Messages can be paginated for long conversations.
+//
+// **Message Pagination:**
+//
 // For conversations with many messages, use pagination parameters:
-// <ul>
-// <li><code>page</code>: Page number (default: 1)</li>
-// <li><code>limit</code>: Messages per page (default: 10)</li>
-// <li><code>sortBy</code>: Sort field (default: createdAt)</li>
-// <li><code>sortOrder</code>: 'asc' or 'desc' (default: desc)</li>
-// </ul>
-// <b>Access Control:</b><br>
+//
+// - `page`: Page number (default: 1)
+// - `limit`: Messages per page (default: 10)
+// - `sortBy`: Sort field (default: createdAt)
+// - `sortOrder`: 'asc' or 'desc' (default: desc)
+//
+// **Access Control:**
+//
 // Users can access conversations they own or that have been shared with them.
-func (s *Conversations) Get(ctx context.Context, request operations.GetConversationByIDRequest, opts ...operations.Option) (*operations.GetConversationByIDResponse, error) {
+func (s *Conversations) GetConversationByID(ctx context.Context, request operations.GetConversationByIDRequest, opts ...operations.Option) (*operations.GetConversationByIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -1174,15 +1231,21 @@ func (s *Conversations) Get(ctx context.Context, request operations.GetConversat
 
 }
 
-// Delete conversation
-// Delete a conversation by its ID.<br><br>
-// <b>Overview:</b><br>
-// Performs a soft delete by setting <code>isDeleted: true</code>.
-// The conversation is removed from listings but preserved in the database.<br><br>
-// <b>Permissions:</b><br>
-// Only the conversation owner (initiator) can delete it.
-// Shared users cannot delete conversations.
-func (s *Conversations) Delete(ctx context.Context, conversationID string, opts ...operations.Option) (*operations.DeleteConversationByIDResponse, error) {
+// DeleteConversationByID - Delete conversation
+// Delete a conversation by its ID.
+//
+// **Overview:**
+//
+// Performs a soft delete by setting `isDeleted: true`. The conversation is
+// removed from listings but preserved in the database. All citations
+// referenced by messages in the conversation are also soft-deleted.
+//
+// **Permissions:**
+//
+// The conversation initiator can always delete. Users the conversation has
+// been shared with may delete it only when their `sharedWith.accessLevel`
+// is `write`.
+func (s *Conversations) DeleteConversationByID(ctx context.Context, conversationID string, opts ...operations.Option) (*operations.DeleteConversationByIDResponse, error) {
 	request := operations.DeleteConversationByIDRequest{
 		ConversationID: conversationID,
 	}
@@ -1322,7 +1385,7 @@ func (s *Conversations) Delete(ctx context.Context, conversationID string, opts 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1366,242 +1429,6 @@ func (s *Conversations) Delete(ctx context.Context, conversationID string, opts 
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
-	case httpRes.StatusCode == 401:
-		fallthrough
-	case httpRes.StatusCode == 403:
-		fallthrough
-	case httpRes.StatusCode == 404:
-		fallthrough
-	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	default:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
-	}
-
-	return res, nil
-
-}
-
-// AddMessage - Add message to conversation
-// Add a follow-up message to an existing conversation.<br><br>
-// <b>Overview:</b><br>
-// Continues an existing conversation by adding a new user query.
-// The AI maintains context from previous messages when generating the response.<br><br>
-// <b>Context Handling:</b><br>
-// <ul>
-// <li>Previous messages provide context for the new query</li>
-// <li>Citations from earlier messages may be referenced</li>
-// <li>The AI can refer back to previous topics discussed</li>
-// </ul>
-// <b>Model Override:</b><br>
-// You can specify a different model for this message using <code>modelKey</code>.
-// This allows switching models mid-conversation if needed.
-func (s *Conversations) AddMessage(ctx context.Context, conversationID string, body components.AddMessageRequest, opts ...operations.Option) (*operations.AddMessageResponse, error) {
-	request := operations.AddMessageRequest{
-		ConversationID: conversationID,
-		Body:           body,
-	}
-
-	o := operations.Options{}
-	supportedOptions := []string{
-		operations.SupportedOptionRetries,
-		operations.SupportedOptionTimeout,
-	}
-
-	for _, opt := range opts {
-		if err := opt(&o, supportedOptions...); err != nil {
-			return nil, fmt.Errorf("error applying option: %w", err)
-		}
-	}
-
-	var baseURL string
-	if o.ServerURL == nil {
-		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
-	} else {
-		baseURL = *o.ServerURL
-	}
-	opURL, err := utils.GenerateURL(ctx, baseURL, "/conversations/{conversationId}/messages", request, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error generating URL: %w", err)
-	}
-
-	hookCtx := hooks.HookContext{
-		SDK:              s.rootSDK,
-		SDKConfiguration: s.sdkConfiguration,
-		BaseURL:          baseURL,
-		Context:          ctx,
-		OperationID:      "addMessage",
-		OAuth2Scopes:     []string{},
-		SecuritySource:   s.sdkConfiguration.Security,
-	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
-	if err != nil {
-		return nil, err
-	}
-
-	timeout := o.Timeout
-	if timeout == nil {
-		timeout = s.sdkConfiguration.Timeout
-	}
-
-	if timeout != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
-	if reqContentType != "" {
-		req.Header.Set("Content-Type", reqContentType)
-	}
-
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
-		return nil, err
-	}
-
-	for k, v := range o.SetHeaders {
-		req.Header.Set(k, v)
-	}
-
-	globalRetryConfig := s.sdkConfiguration.RetryConfig
-	retryConfig := o.Retries
-	if retryConfig == nil {
-		if globalRetryConfig != nil {
-			retryConfig = globalRetryConfig
-		}
-	}
-
-	var httpRes *http.Response
-	if retryConfig != nil {
-		httpRes, err = utils.Retry(ctx, utils.Retries{
-			Config: retryConfig,
-			StatusCodes: []string{
-				"429",
-				"500",
-				"502",
-				"503",
-				"504",
-			},
-		}, func() (*http.Response, error) {
-			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
-				copyBody, err := req.GetBody()
-
-				if err != nil {
-					return nil, err
-				}
-
-				req.Body = copyBody
-			}
-
-			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-			if err != nil {
-				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
-					return nil, err
-				}
-
-				return nil, retry.Permanent(err)
-			}
-
-			httpRes, err := s.sdkConfiguration.Client.Do(req)
-			if err != nil || httpRes == nil {
-				if err != nil {
-					err = fmt.Errorf("error sending request: %w", err)
-				} else {
-					err = fmt.Errorf("error sending request: no response")
-				}
-
-				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			}
-			return httpRes, err
-		})
-
-		if err != nil {
-			return nil, err
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-		if err != nil {
-			return nil, err
-		}
-
-		httpRes, err = s.sdkConfiguration.Client.Do(req)
-		if err != nil || httpRes == nil {
-			if err != nil {
-				err = fmt.Errorf("error sending request: %w", err)
-			} else {
-				err = fmt.Errorf("error sending request: no response")
-			}
-
-			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "5XX"}, httpRes.StatusCode) {
-			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
-			if err != nil {
-				return nil, err
-			} else if _httpRes != nil {
-				httpRes = _httpRes
-			}
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	res := &operations.AddMessageResponse{
-		HTTPMeta: components.HTTPMetadata{
-			Request:  req,
-			Response: httpRes,
-		},
-	}
-
-	switch {
-	case httpRes.StatusCode == 200:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out components.Conversation
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.Conversation = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 401:
@@ -1616,6 +1443,8 @@ func (s *Conversations) AddMessage(ctx context.Context, conversationID string, b
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode == 500:
+		fallthrough
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -1634,13 +1463,18 @@ func (s *Conversations) AddMessage(ctx context.Context, conversationID string, b
 
 }
 
-// AddMessageStream - Add message with streaming response
-// Add a follow-up message to an existing conversation with real-time SSE streaming.<br><br>
-// <b>Overview:</b><br>
-// Same as <code>POST /conversations/{id}/messages</code> but with streaming response.
-// Provides real-time feedback as the AI generates its response.<br><br>
-// <b>SSE Events:</b><br>
-// See <code>/conversations/stream</code> for event type documentation.
+// AddMessageStream - Add message to a conversation with streaming response
+// Add a follow-up message to an existing conversation and stream the
+// assistant's response over Server-Sent Events.
+//
+// Functionally equivalent to `POST /conversations/{conversationId}/messages`
+// but the response is delivered as an SSE stream so clients can render
+// the answer incrementally.
+//
+// The wire vocabulary is described by `AssistantMessageStreamSSEEvent`.
+// It is the same event set as `/conversations/stream`; only the
+// `connected` and `complete` payloads differ because the conversation
+// already exists when this route is called.
 func (s *Conversations) AddMessageStream(ctx context.Context, conversationID string, body components.AddMessageRequest, opts ...operations.Option) (*operations.AddMessageStreamResponse, error) {
 	request := operations.AddMessageStreamRequest{
 		ConversationID: conversationID,
@@ -1789,7 +1623,7 @@ func (s *Conversations) AddMessageStream(ctx context.Context, conversationID str
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1815,247 +1649,14 @@ func (s *Conversations) AddMessageStream(ctx context.Context, conversationID str
 	case httpRes.StatusCode == 200:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/event-stream`):
-			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.SSEEvent, error) {
-				var e components.SSEEvent
+			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.AssistantMessageStreamSSEEvent, error) {
+				var e components.AssistantMessageStreamSSEEvent
 				if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(se), &e, ""); err != nil {
-					return components.SSEEvent{}, err
+					return components.AssistantMessageStreamSSEEvent{}, err
 				}
 				return e, nil
 			}, "")
-			res.SSEEvent = out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 401:
-		fallthrough
-	case httpRes.StatusCode == 404:
-		fallthrough
-	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	default:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
-	}
-
-	return res, nil
-
-}
-
-// Share conversation with users
-// Share a conversation with other users in your organization.<br><br>
-// <b>Overview:</b><br>
-// Allows the conversation owner to grant access to other users.
-// Shared users can view the conversation and optionally add messages.<br><br>
-// <b>Access Levels:</b><br>
-// <ul>
-// <li><code>read</code> - Can view conversation and messages (default)</li>
-// <li><code>write</code> - Can view and add new messages</li>
-// </ul>
-// <b>Permissions:</b><br>
-// Only the conversation initiator (owner) can share. Users must belong
-// to the same organization.
-func (s *Conversations) Share(ctx context.Context, conversationID string, body components.ShareRequest, opts ...operations.Option) (*operations.ShareConversationResponse, error) {
-	request := operations.ShareConversationRequest{
-		ConversationID: conversationID,
-		Body:           body,
-	}
-
-	o := operations.Options{}
-	supportedOptions := []string{
-		operations.SupportedOptionRetries,
-		operations.SupportedOptionTimeout,
-	}
-
-	for _, opt := range opts {
-		if err := opt(&o, supportedOptions...); err != nil {
-			return nil, fmt.Errorf("error applying option: %w", err)
-		}
-	}
-
-	var baseURL string
-	if o.ServerURL == nil {
-		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
-	} else {
-		baseURL = *o.ServerURL
-	}
-	opURL, err := utils.GenerateURL(ctx, baseURL, "/conversations/{conversationId}/share", request, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error generating URL: %w", err)
-	}
-
-	hookCtx := hooks.HookContext{
-		SDK:              s.rootSDK,
-		SDKConfiguration: s.sdkConfiguration,
-		BaseURL:          baseURL,
-		Context:          ctx,
-		OperationID:      "shareConversation",
-		OAuth2Scopes:     []string{"conversation:write"},
-		SecuritySource:   s.sdkConfiguration.Security,
-	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
-	if err != nil {
-		return nil, err
-	}
-
-	timeout := o.Timeout
-	if timeout == nil {
-		timeout = s.sdkConfiguration.Timeout
-	}
-
-	if timeout != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
-	if reqContentType != "" {
-		req.Header.Set("Content-Type", reqContentType)
-	}
-
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
-		return nil, err
-	}
-
-	for k, v := range o.SetHeaders {
-		req.Header.Set(k, v)
-	}
-
-	globalRetryConfig := s.sdkConfiguration.RetryConfig
-	retryConfig := o.Retries
-	if retryConfig == nil {
-		if globalRetryConfig != nil {
-			retryConfig = globalRetryConfig
-		}
-	}
-
-	var httpRes *http.Response
-	if retryConfig != nil {
-		httpRes, err = utils.Retry(ctx, utils.Retries{
-			Config: retryConfig,
-			StatusCodes: []string{
-				"429",
-				"500",
-				"502",
-				"503",
-				"504",
-			},
-		}, func() (*http.Response, error) {
-			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
-				copyBody, err := req.GetBody()
-
-				if err != nil {
-					return nil, err
-				}
-
-				req.Body = copyBody
-			}
-
-			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-			if err != nil {
-				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
-					return nil, err
-				}
-
-				return nil, retry.Permanent(err)
-			}
-
-			httpRes, err := s.sdkConfiguration.Client.Do(req)
-			if err != nil || httpRes == nil {
-				if err != nil {
-					err = fmt.Errorf("error sending request: %w", err)
-				} else {
-					err = fmt.Errorf("error sending request: no response")
-				}
-
-				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			}
-			return httpRes, err
-		})
-
-		if err != nil {
-			return nil, err
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-		if err != nil {
-			return nil, err
-		}
-
-		httpRes, err = s.sdkConfiguration.Client.Do(req)
-		if err != nil || httpRes == nil {
-			if err != nil {
-				err = fmt.Errorf("error sending request: %w", err)
-			} else {
-				err = fmt.Errorf("error sending request: no response")
-			}
-
-			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "5XX"}, httpRes.StatusCode) {
-			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
-			if err != nil {
-				return nil, err
-			} else if _httpRes != nil {
-				httpRes = _httpRes
-			}
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	res := &operations.ShareConversationResponse{
-		HTTPMeta: components.HTTPMetadata{
-			Request:  req,
-			Response: httpRes,
-		},
-	}
-
-	switch {
-	case httpRes.StatusCode == 200:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out components.Conversation
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.Conversation = &out
+			res.AssistantMessageStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2077,6 +1678,8 @@ func (s *Conversations) Share(ctx context.Context, conversationID string, body c
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode == 500:
+		fallthrough
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2095,17 +1698,24 @@ func (s *Conversations) Share(ctx context.Context, conversationID string, body c
 
 }
 
-// UpdateTitle - Update conversation title
-// Update the title of a conversation.<br><br>
-// <b>Overview:</b><br>
+// UpdateConversationTitle - Update conversation title
+// Update the title of a conversation.
+//
+// **Overview:**
+//
 // Conversation titles are auto-generated from the first query by default.
-// Use this endpoint to set a custom, more descriptive title.<br><br>
-// <b>Title Limits:</b><br>
-// <ul>
-// <li>Minimum: 1 character</li>
-// <li>Maximum: 200 characters</li>
-// </ul>
-func (s *Conversations) UpdateTitle(ctx context.Context, conversationID string, body operations.UpdateConversationTitleRequestBody, opts ...operations.Option) (*operations.UpdateConversationTitleResponse, error) {
+// Use this endpoint to set a custom, more descriptive title.
+//
+// **Title limits:**
+//
+// - Minimum: 1 character
+// - Maximum: 200 characters
+//
+// **Permissions:**
+//
+// The conversation must exist, belong to the calling user's organization,
+// be owned by the caller (matched on `userId`), and not be soft-deleted.
+func (s *Conversations) UpdateConversationTitle(ctx context.Context, conversationID string, body operations.UpdateConversationTitleRequestBody, opts ...operations.Option) (*operations.UpdateConversationTitleResponse, error) {
 	request := operations.UpdateConversationTitleRequest{
 		ConversationID: conversationID,
 		Body:           body,
@@ -2253,7 +1863,7 @@ func (s *Conversations) UpdateTitle(ctx context.Context, conversationID string, 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2284,12 +1894,12 @@ func (s *Conversations) UpdateTitle(ctx context.Context, conversationID string, 
 				return nil, err
 			}
 
-			var out components.Conversation
+			var out operations.UpdateConversationTitleResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Conversation = &out
+			res.Object = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2301,6 +1911,8 @@ func (s *Conversations) UpdateTitle(ctx context.Context, conversationID string, 
 		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
@@ -2309,6 +1921,8 @@ func (s *Conversations) UpdateTitle(ctx context.Context, conversationID string, 
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode == 500:
+		fallthrough
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2327,14 +1941,24 @@ func (s *Conversations) UpdateTitle(ctx context.Context, conversationID string, 
 
 }
 
-// Archive conversation
-// Archive a conversation to hide it from the main list.<br><br>
-// <b>Overview:</b><br>
+// ArchiveConversation - Archive conversation
+// Archive a conversation to hide it from the main list.
+//
+// **Overview:**
+//
 // Archived conversations are preserved but hidden from the default conversation list.
-// Use archiving to clean up your workspace without permanently deleting conversations.<br><br>
-// <b>Retrieval:</b><br>
-// View archived conversations using <code>GET /conversations/show/archives</code>.
-func (s *Conversations) Archive(ctx context.Context, conversationID string, opts ...operations.Option) (*operations.ArchiveConversationResponse, error) {
+// Use archiving to clean up your workspace without permanently deleting conversations.
+//
+// **Access:**
+//
+// The caller must be the conversation's initiator, or be listed in `sharedWith`
+// with `accessLevel: write`. Already-archived conversations return `400`.
+//
+// **Retrieval:**
+//
+// View archived conversations using `GET /conversations/show/archives`.
+// Restore one with `PATCH /conversations/{conversationId}/unarchive`.
+func (s *Conversations) ArchiveConversation(ctx context.Context, conversationID string, opts ...operations.Option) (*operations.ArchiveConversationResponse, error) {
 	request := operations.ArchiveConversationRequest{
 		ConversationID: conversationID,
 	}
@@ -2474,7 +2098,7 @@ func (s *Conversations) Archive(ctx context.Context, conversationID string, opts
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2505,12 +2129,12 @@ func (s *Conversations) Archive(ctx context.Context, conversationID string, opts
 				return nil, err
 			}
 
-			var out components.Conversation
+			var out operations.ArchiveConversationResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Conversation = &out
+			res.Object = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2518,6 +2142,8 @@ func (s *Conversations) Archive(ctx context.Context, conversationID string, opts
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 404:
@@ -2546,11 +2172,13 @@ func (s *Conversations) Archive(ctx context.Context, conversationID string, opts
 
 }
 
-// Unarchive conversation
-// Restore an archived conversation to the active list.<br><br>
-// <b>Overview:</b><br>
-// Removes the archived flag, making the conversation visible in the main list again.
-func (s *Conversations) Unarchive(ctx context.Context, conversationID string, opts ...operations.Option) (*operations.UnarchiveConversationResponse, error) {
+// UnarchiveConversation - Unarchive conversation
+// Restore an archived conversation.
+//
+// - Path params: `conversationId`
+// - Query params: none
+// - Body: none
+func (s *Conversations) UnarchiveConversation(ctx context.Context, conversationID string, opts ...operations.Option) (*operations.UnarchiveConversationResponse, error) {
 	request := operations.UnarchiveConversationRequest{
 		ConversationID: conversationID,
 	}
@@ -2690,7 +2318,7 @@ func (s *Conversations) Unarchive(ctx context.Context, conversationID string, op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2721,12 +2349,12 @@ func (s *Conversations) Unarchive(ctx context.Context, conversationID string, op
 				return nil, err
 			}
 
-			var out components.Conversation
+			var out operations.UnarchiveConversationResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Conversation = &out
+			res.Object = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2734,7 +2362,11 @@ func (s *Conversations) Unarchive(ctx context.Context, conversationID string, op
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
 		fallthrough
@@ -2744,6 +2376,8 @@ func (s *Conversations) Unarchive(ctx context.Context, conversationID string, op
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode == 500:
+		fallthrough
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2762,21 +2396,46 @@ func (s *Conversations) Unarchive(ctx context.Context, conversationID string, op
 
 }
 
-// Regenerate AI response
-// Regenerate the AI response for a specific message.<br><br>
-// <b>Overview:</b><br>
+// RegenerateAnswer - Regenerate AI response
+// Regenerate the AI response for a specific message and stream the new
+// answer over Server-Sent Events.
+//
+// **Overview:**
+//
 // If you're not satisfied with an AI response, use this endpoint to generate
-// a new answer. The AI will re-process the original query and may produce
-// a different response.<br><br>
-// <b>Use Cases:</b><br>
-// <ul>
-// <li>Response was incomplete or unclear</li>
-// <li>Want to try a different AI model</li>
-// <li>New documents have been indexed since original response</li>
-// </ul>
-// <b>Model Override:</b><br>
-// Specify <code>modelKey</code> to use a different model for regeneration.
-func (s *Conversations) Regenerate(ctx context.Context, conversationID string, messageID string, body *operations.RegenerateAnswerRequestBody, opts ...operations.Option) (*operations.RegenerateAnswerResponse, error) {
+// a new answer. The original user query is re-processed and a new bot
+// response replaces the previous one in place.
+//
+// **Constraints:**
+//
+// - Only the *last* message of the conversation can be regenerated.
+// - The target message must be of type `bot_response`.
+//
+// **Use Cases:**
+//
+// - Response was incomplete or unclear
+// - Want to try a different AI model
+// - New documents have been indexed since original response
+//
+// **Model Override:**
+//
+// Specify `modelKey` to use a different model for regeneration.
+//
+// **Streaming:**
+//
+// The response is delivered as an SSE (`text/event-stream`) stream. The
+// exact event vocabulary depends on `chatMode`:
+//
+//   - For non-agent modes (e.g. `internal_search`, `web_search`) the
+//     request is dispatched to the assistant chat backend.
+//   - For agent modes (e.g. `agent:auto`) the request is dispatched to
+//     the agent backend with a placeholder agent built from the caller's
+//     workspace, which can additionally emit `tool_result` and
+//     `tool_execution_complete` events.
+//
+// See `SSEEvent` for the full union of event names this endpoint can
+// emit across both backends.
+func (s *Conversations) RegenerateAnswer(ctx context.Context, conversationID string, messageID string, body *components.RegenerateRequest, opts ...operations.Option) (*operations.RegenerateAnswerResponse, error) {
 	request := operations.RegenerateAnswerRequest{
 		ConversationID: conversationID,
 		MessageID:      messageID,
@@ -2835,7 +2494,7 @@ func (s *Conversations) Regenerate(ctx context.Context, conversationID string, m
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
@@ -2950,18 +2609,15 @@ func (s *Conversations) Regenerate(ctx context.Context, conversationID string, m
 	switch {
 	case httpRes.StatusCode == 200:
 		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out components.Conversation
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.Conversation = &out
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/event-stream`):
+			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.SSEEvent, error) {
+				var e components.SSEEvent
+				if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(se), &e, ""); err != nil {
+					return components.SSEEvent{}, err
+				}
+				return e, nil
+			}, "")
+			res.SSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2999,23 +2655,31 @@ func (s *Conversations) Regenerate(ctx context.Context, conversationID string, m
 
 }
 
-// SubmitFeedback - Submit feedback on AI response
-// Provide feedback on an AI-generated response.<br><br>
-// <b>Overview:</b><br>
-// Feedback helps improve AI response quality over time. You can rate
-// various aspects of the response and provide detailed comments.<br><br>
-// <b>Feedback Options:</b><br>
-// <ul>
-// <li><b>isHelpful:</b> Overall thumbs up/down</li>
-// <li><b>ratings:</b> 1-5 scale for accuracy, relevance, completeness, clarity</li>
-// <li><b>categories:</b> Issue categories (incorrect info, too verbose, etc.)</li>
-// <li><b>comments:</b> Free-text positive/negative feedback and suggestions</li>
-// <li><b>citationFeedback:</b> Rate individual citations</li>
-// </ul>
-// <b>Restrictions:</b><br>
-// Feedback can only be submitted on <code>bot_response</code> messages,
-// not on user queries or system messages.
-func (s *Conversations) SubmitFeedback(ctx context.Context, conversationID string, messageID string, body components.MessageFeedback, opts ...operations.Option) (*operations.UpdateMessageFeedbackResponse, error) {
+// UpdateMessageFeedback - Submit feedback on AI response
+// Append a feedback entry to a bot-response message.
+//
+// **Overview**
+//
+// Feedback helps improve AI response quality over time. You can record an
+// overall helpfulness signal, per-aspect ratings, issue categories, and
+// free-text comments. Each call appends a new entry to the message;
+// previous entries are preserved.
+//
+// **Feedback options**
+//
+//   - `isHelpful` — overall thumbs up/down.
+//   - `ratings` — 1–5 scores keyed by an aspect name you choose
+//     (e.g. `accuracy`, `relevance`, `completeness`, `clarity`).
+//   - `categories` — issue or positive categories from a fixed list.
+//   - `comments` — free-text `positive`, `negative`, and `suggestions`.
+//   - `metrics` — optional client-side telemetry
+//     (`userInteractionTime`, `feedbackSessionId`).
+//
+// **Restrictions**
+//
+// Feedback can only be submitted on `bot_response` messages — user
+// queries and system messages are rejected with `400`.
+func (s *Conversations) UpdateMessageFeedback(ctx context.Context, conversationID string, messageID string, body operations.UpdateMessageFeedbackRequestBody, opts ...operations.Option) (*operations.UpdateMessageFeedbackResponse, error) {
 	request := operations.UpdateMessageFeedbackRequest{
 		ConversationID: conversationID,
 		MessageID:      messageID,
@@ -3164,7 +2828,7 @@ func (s *Conversations) SubmitFeedback(ctx context.Context, conversationID strin
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3195,12 +2859,12 @@ func (s *Conversations) SubmitFeedback(ctx context.Context, conversationID strin
 				return nil, err
 			}
 
-			var out components.Conversation
+			var out operations.UpdateMessageFeedbackResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Conversation = &out
+			res.Object = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -3220,228 +2884,8 @@ func (s *Conversations) SubmitFeedback(ctx context.Context, conversationID strin
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	default:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
-	}
-
-	return res, nil
-
-}
-
-// Unshare a conversation
-// Revoke sharing for a conversation, making it private again.
-func (s *Conversations) Unshare(ctx context.Context, conversationID string, body *operations.UnshareConversationByIDRequestBody, opts ...operations.Option) (*operations.UnshareConversationByIDResponse, error) {
-	request := operations.UnshareConversationByIDRequest{
-		ConversationID: conversationID,
-		Body:           body,
-	}
-
-	o := operations.Options{}
-	supportedOptions := []string{
-		operations.SupportedOptionRetries,
-		operations.SupportedOptionTimeout,
-	}
-
-	for _, opt := range opts {
-		if err := opt(&o, supportedOptions...); err != nil {
-			return nil, fmt.Errorf("error applying option: %w", err)
-		}
-	}
-
-	var baseURL string
-	if o.ServerURL == nil {
-		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
-	} else {
-		baseURL = *o.ServerURL
-	}
-	opURL, err := utils.GenerateURL(ctx, baseURL, "/conversations/{conversationId}/unshare", request, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error generating URL: %w", err)
-	}
-
-	hookCtx := hooks.HookContext{
-		SDK:              s.rootSDK,
-		SDKConfiguration: s.sdkConfiguration,
-		BaseURL:          baseURL,
-		Context:          ctx,
-		OperationID:      "unshareConversationById",
-		OAuth2Scopes:     []string{"conversation:write"},
-		SecuritySource:   s.sdkConfiguration.Security,
-	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "json", `request:"mediaType=application/json"`)
-	if err != nil {
-		return nil, err
-	}
-
-	timeout := o.Timeout
-	if timeout == nil {
-		timeout = s.sdkConfiguration.Timeout
-	}
-
-	if timeout != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
-	if reqContentType != "" {
-		req.Header.Set("Content-Type", reqContentType)
-	}
-
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
-		return nil, err
-	}
-
-	for k, v := range o.SetHeaders {
-		req.Header.Set(k, v)
-	}
-
-	globalRetryConfig := s.sdkConfiguration.RetryConfig
-	retryConfig := o.Retries
-	if retryConfig == nil {
-		if globalRetryConfig != nil {
-			retryConfig = globalRetryConfig
-		}
-	}
-
-	var httpRes *http.Response
-	if retryConfig != nil {
-		httpRes, err = utils.Retry(ctx, utils.Retries{
-			Config: retryConfig,
-			StatusCodes: []string{
-				"429",
-				"500",
-				"502",
-				"503",
-				"504",
-			},
-		}, func() (*http.Response, error) {
-			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
-				copyBody, err := req.GetBody()
-
-				if err != nil {
-					return nil, err
-				}
-
-				req.Body = copyBody
-			}
-
-			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-			if err != nil {
-				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
-					return nil, err
-				}
-
-				return nil, retry.Permanent(err)
-			}
-
-			httpRes, err := s.sdkConfiguration.Client.Do(req)
-			if err != nil || httpRes == nil {
-				if err != nil {
-					err = fmt.Errorf("error sending request: %w", err)
-				} else {
-					err = fmt.Errorf("error sending request: no response")
-				}
-
-				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			}
-			return httpRes, err
-		})
-
-		if err != nil {
-			return nil, err
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-		if err != nil {
-			return nil, err
-		}
-
-		httpRes, err = s.sdkConfiguration.Client.Do(req)
-		if err != nil || httpRes == nil {
-			if err != nil {
-				err = fmt.Errorf("error sending request: %w", err)
-			} else {
-				err = fmt.Errorf("error sending request: no response")
-			}
-
-			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
-			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
-			if err != nil {
-				return nil, err
-			} else if _httpRes != nil {
-				httpRes = _httpRes
-			}
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	res := &operations.UnshareConversationByIDResponse{
-		HTTPMeta: components.HTTPMetadata{
-			Request:  req,
-			Response: httpRes,
-		},
-	}
-
-	switch {
-	case httpRes.StatusCode == 200:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out operations.UnshareConversationByIDResponseBody
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.Object = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 401:
+	case httpRes.StatusCode == 500:
 		fallthrough
-	case httpRes.StatusCode == 404:
-		fallthrough
-	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {

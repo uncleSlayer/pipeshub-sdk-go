@@ -9,8 +9,11 @@ import (
 
 type StreamChatResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// SSE stream established
-	SSEEvent *stream.EventStream[components.SSEEvent]
+	// SSE stream established. The body is a sequence of
+	// `text/event-stream` frames using the event vocabulary described
+	// above.
+	//
+	AssistantStreamSSEEvent *stream.EventStream[components.AssistantStreamSSEEvent]
 }
 
 func (s *StreamChatResponse) GetHTTPMeta() components.HTTPMetadata {
@@ -20,9 +23,9 @@ func (s *StreamChatResponse) GetHTTPMeta() components.HTTPMetadata {
 	return s.HTTPMeta
 }
 
-func (s *StreamChatResponse) GetSSEEvent() *stream.EventStream[components.SSEEvent] {
+func (s *StreamChatResponse) GetAssistantStreamSSEEvent() *stream.EventStream[components.AssistantStreamSSEEvent] {
 	if s == nil {
 		return nil
 	}
-	return s.SSEEvent
+	return s.AssistantStreamSSEEvent
 }

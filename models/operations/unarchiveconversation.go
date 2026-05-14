@@ -3,11 +3,15 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
 type UnarchiveConversationRequest struct {
+	// Conversation identifier
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
 }
 
@@ -18,10 +22,134 @@ func (u *UnarchiveConversationRequest) GetConversationID() string {
 	return u.ConversationID
 }
 
+// UnarchiveConversationStatus - New archive status of the conversation
+type UnarchiveConversationStatus string
+
+const (
+	UnarchiveConversationStatusUnarchived UnarchiveConversationStatus = "unarchived"
+)
+
+func (e UnarchiveConversationStatus) ToPointer() *UnarchiveConversationStatus {
+	return &e
+}
+func (e *UnarchiveConversationStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "unarchived":
+		*e = UnarchiveConversationStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for UnarchiveConversationStatus: %v", v)
+	}
+}
+
+type UnarchiveConversationMeta struct {
+	// Request correlation identifier
+	RequestID *string `json:"requestId,omitzero"`
+	// Response generation timestamp
+	Timestamp *time.Time `json:"timestamp,omitzero"`
+	// Server processing time in milliseconds
+	Duration *int64 `json:"duration,omitzero"`
+}
+
+func (u UnarchiveConversationMeta) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UnarchiveConversationMeta) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UnarchiveConversationMeta) GetRequestID() *string {
+	if u == nil {
+		return nil
+	}
+	return u.RequestID
+}
+
+func (u *UnarchiveConversationMeta) GetTimestamp() *time.Time {
+	if u == nil {
+		return nil
+	}
+	return u.Timestamp
+}
+
+func (u *UnarchiveConversationMeta) GetDuration() *int64 {
+	if u == nil {
+		return nil
+	}
+	return u.Duration
+}
+
+// UnarchiveConversationResponseBody - Conversation unarchived successfully
+type UnarchiveConversationResponseBody struct {
+	// Conversation identifier
+	ID *string `json:"id,omitzero"`
+	// New archive status of the conversation
+	Status *UnarchiveConversationStatus `json:"status,omitzero"`
+	// User who unarchived the conversation
+	UnarchivedBy *string `json:"unarchivedBy,omitzero"`
+	// Timestamp when the conversation was unarchived
+	UnarchivedAt *time.Time                 `json:"unarchivedAt,omitzero"`
+	Meta         *UnarchiveConversationMeta `json:"meta,omitzero"`
+}
+
+func (u UnarchiveConversationResponseBody) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UnarchiveConversationResponseBody) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UnarchiveConversationResponseBody) GetID() *string {
+	if u == nil {
+		return nil
+	}
+	return u.ID
+}
+
+func (u *UnarchiveConversationResponseBody) GetStatus() *UnarchiveConversationStatus {
+	if u == nil {
+		return nil
+	}
+	return u.Status
+}
+
+func (u *UnarchiveConversationResponseBody) GetUnarchivedBy() *string {
+	if u == nil {
+		return nil
+	}
+	return u.UnarchivedBy
+}
+
+func (u *UnarchiveConversationResponseBody) GetUnarchivedAt() *time.Time {
+	if u == nil {
+		return nil
+	}
+	return u.UnarchivedAt
+}
+
+func (u *UnarchiveConversationResponseBody) GetMeta() *UnarchiveConversationMeta {
+	if u == nil {
+		return nil
+	}
+	return u.Meta
+}
+
 type UnarchiveConversationResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Conversation unarchived successfully
-	Conversation *components.Conversation
+	Object *UnarchiveConversationResponseBody
 }
 
 func (u UnarchiveConversationResponse) MarshalJSON() ([]byte, error) {
@@ -42,9 +170,9 @@ func (u *UnarchiveConversationResponse) GetHTTPMeta() components.HTTPMetadata {
 	return u.HTTPMeta
 }
 
-func (u *UnarchiveConversationResponse) GetConversation() *components.Conversation {
+func (u *UnarchiveConversationResponse) GetObject() *UnarchiveConversationResponseBody {
 	if u == nil {
 		return nil
 	}
-	return u.Conversation
+	return u.Object
 }

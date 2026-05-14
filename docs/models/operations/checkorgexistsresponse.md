@@ -1,9 +1,0 @@
-# CheckOrgExistsResponse
-
-
-## Fields
-
-| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
-| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
-| `Object`                                                                                        | [*operations.CheckOrgExistsResponseBody](../../models/operations/checkorgexistsresponsebody.md) | :heavy_minus_sign:                                                                              | Organization existence check completed                                                          |

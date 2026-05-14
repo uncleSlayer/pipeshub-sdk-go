@@ -3,18 +3,625 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
 )
 
+// GetArchivedConversationsSortByEnum - Field to sort by
+type GetArchivedConversationsSortByEnum string
+
+const (
+	GetArchivedConversationsSortByEnumCreatedAt      GetArchivedConversationsSortByEnum = "createdAt"
+	GetArchivedConversationsSortByEnumLastActivityAt GetArchivedConversationsSortByEnum = "lastActivityAt"
+	GetArchivedConversationsSortByEnumTitle          GetArchivedConversationsSortByEnum = "title"
+)
+
+func (e GetArchivedConversationsSortByEnum) ToPointer() *GetArchivedConversationsSortByEnum {
+	return &e
+}
+func (e *GetArchivedConversationsSortByEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "createdAt":
+		fallthrough
+	case "lastActivityAt":
+		fallthrough
+	case "title":
+		*e = GetArchivedConversationsSortByEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetArchivedConversationsSortByEnum: %v", v)
+	}
+}
+
+// GetArchivedConversationsSortOrderEnum - Sort direction
+type GetArchivedConversationsSortOrderEnum string
+
+const (
+	GetArchivedConversationsSortOrderEnumAsc  GetArchivedConversationsSortOrderEnum = "asc"
+	GetArchivedConversationsSortOrderEnumDesc GetArchivedConversationsSortOrderEnum = "desc"
+)
+
+func (e GetArchivedConversationsSortOrderEnum) ToPointer() *GetArchivedConversationsSortOrderEnum {
+	return &e
+}
+func (e *GetArchivedConversationsSortOrderEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "asc":
+		fallthrough
+	case "desc":
+		*e = GetArchivedConversationsSortOrderEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetArchivedConversationsSortOrderEnum: %v", v)
+	}
+}
+
+type GetArchivedConversationsRequest struct {
+	// Page number (1-indexed)
+	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Items per page
+	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
+	// Field to sort by
+	SortBy *GetArchivedConversationsSortByEnum `default:"lastActivityAt" queryParam:"style=form,explode=true,name=sortBy"`
+	// Sort direction
+	SortOrder *GetArchivedConversationsSortOrderEnum `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
+	// Case-insensitive substring match against title and message content (max 1000 chars)
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Filter by shared status
+	Shared *bool `queryParam:"style=form,explode=true,name=shared"`
+	// Include conversations created on or after this timestamp
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
+	// Include conversations created on or before this timestamp
+	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
+	// Restrict results to a single conversation by identifier
+	ConversationID *string `queryParam:"style=form,explode=true,name=conversationId"`
+}
+
+func (g GetArchivedConversationsRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsRequest) GetPage() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Page
+}
+
+func (g *GetArchivedConversationsRequest) GetLimit() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Limit
+}
+
+func (g *GetArchivedConversationsRequest) GetSortBy() *GetArchivedConversationsSortByEnum {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetArchivedConversationsRequest) GetSortOrder() *GetArchivedConversationsSortOrderEnum {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+func (g *GetArchivedConversationsRequest) GetSearch() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Search
+}
+
+func (g *GetArchivedConversationsRequest) GetShared() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Shared
+}
+
+func (g *GetArchivedConversationsRequest) GetStartDate() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.StartDate
+}
+
+func (g *GetArchivedConversationsRequest) GetEndDate() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.EndDate
+}
+
+func (g *GetArchivedConversationsRequest) GetConversationID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ConversationID
+}
+
+// GetArchivedConversationsStatus - Current status of the conversation:
+// - `None` — no activity yet
+// - `Inprogress` — AI is processing
+// - `Complete` — response ready
+// - `Failed` — error occurred
+type GetArchivedConversationsStatus string
+
+const (
+	GetArchivedConversationsStatusNone       GetArchivedConversationsStatus = "None"
+	GetArchivedConversationsStatusInprogress GetArchivedConversationsStatus = "Inprogress"
+	GetArchivedConversationsStatusComplete   GetArchivedConversationsStatus = "Complete"
+	GetArchivedConversationsStatusFailed     GetArchivedConversationsStatus = "Failed"
+)
+
+func (e GetArchivedConversationsStatus) ToPointer() *GetArchivedConversationsStatus {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetArchivedConversationsStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "None", "Inprogress", "Complete", "Failed":
+			return true
+		}
+	}
+	return false
+}
+
+// GetArchivedConversationsModelInfo - AI model configuration used
+type GetArchivedConversationsModelInfo struct {
+	ModelKey  *string `json:"modelKey,omitzero"`
+	ModelName *string `json:"modelName,omitzero"`
+	// Friendly display name of the selected model
+	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
+	ModelProvider     *string `json:"modelProvider,omitzero"`
+	ChatMode          *string `json:"chatMode,omitzero"`
+}
+
+func (g *GetArchivedConversationsModelInfo) GetModelKey() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ModelKey
+}
+
+func (g *GetArchivedConversationsModelInfo) GetModelName() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ModelName
+}
+
+func (g *GetArchivedConversationsModelInfo) GetModelFriendlyName() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ModelFriendlyName
+}
+
+func (g *GetArchivedConversationsModelInfo) GetModelProvider() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ModelProvider
+}
+
+func (g *GetArchivedConversationsModelInfo) GetChatMode() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ChatMode
+}
+
+type GetArchivedConversationsSharedWithAccessLevel string
+
+const (
+	GetArchivedConversationsSharedWithAccessLevelRead  GetArchivedConversationsSharedWithAccessLevel = "read"
+	GetArchivedConversationsSharedWithAccessLevelWrite GetArchivedConversationsSharedWithAccessLevel = "write"
+)
+
+func (e GetArchivedConversationsSharedWithAccessLevel) ToPointer() *GetArchivedConversationsSharedWithAccessLevel {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetArchivedConversationsSharedWithAccessLevel) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "read", "write":
+			return true
+		}
+	}
+	return false
+}
+
+type GetArchivedConversationsSharedWith struct {
+	UserID      *string                                        `json:"userId,omitzero"`
+	AccessLevel *GetArchivedConversationsSharedWithAccessLevel `json:"accessLevel,omitzero"`
+}
+
+func (g *GetArchivedConversationsSharedWith) GetUserID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.UserID
+}
+
+func (g *GetArchivedConversationsSharedWith) GetAccessLevel() *GetArchivedConversationsSharedWithAccessLevel {
+	if g == nil {
+		return nil
+	}
+	return g.AccessLevel
+}
+
+type GetArchivedConversationsConversationError struct {
+	Message   string         `json:"message"`
+	ErrorType *string        `json:"errorType,omitzero"`
+	Timestamp *time.Time     `json:"timestamp,omitzero"`
+	MessageID *string        `json:"messageId,omitzero"`
+	Stack     *string        `json:"stack,omitzero"`
+	Metadata  map[string]any `json:"metadata,omitzero"`
+}
+
+func (g GetArchivedConversationsConversationError) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsConversationError) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsConversationError) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
+}
+
+func (g *GetArchivedConversationsConversationError) GetErrorType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorType
+}
+
+func (g *GetArchivedConversationsConversationError) GetTimestamp() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.Timestamp
+}
+
+func (g *GetArchivedConversationsConversationError) GetMessageID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.MessageID
+}
+
+func (g *GetArchivedConversationsConversationError) GetStack() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Stack
+}
+
+func (g *GetArchivedConversationsConversationError) GetMetadata() map[string]any {
+	if g == nil {
+		return nil
+	}
+	return g.Metadata
+}
+
+// GetArchivedConversationsAccessLevel - Computed per request. The requester's effective access level:
+// their entry in `sharedWith`, or `read` by default.
+type GetArchivedConversationsAccessLevel string
+
+const (
+	GetArchivedConversationsAccessLevelRead  GetArchivedConversationsAccessLevel = "read"
+	GetArchivedConversationsAccessLevelWrite GetArchivedConversationsAccessLevel = "write"
+)
+
+func (e GetArchivedConversationsAccessLevel) ToPointer() *GetArchivedConversationsAccessLevel {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetArchivedConversationsAccessLevel) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "read", "write":
+			return true
+		}
+	}
+	return false
+}
+
+// GetArchivedConversationsConversation - A conversation represents a chat session between a user and the AI.
+// Conversations maintain context across multiple messages and can be
+// shared, archived, and organized.
+type GetArchivedConversationsConversation struct {
+	// Unique conversation identifier
+	ID *string `json:"_id,omitzero"`
+	// ID of the user who owns this conversation
+	UserID *string `json:"userId,omitzero"`
+	// Organization this conversation belongs to
+	OrgID *string `json:"orgId,omitzero"`
+	// Conversation title, auto-generated from first query
+	// or manually updated
+	//
+	Title *string `json:"title,omitzero"`
+	// User who started the conversation
+	Initiator *string `json:"initiator,omitzero"`
+	// All messages in this conversation
+	Messages []components.Message `json:"messages,omitzero"`
+	// Current status of the conversation:
+	// - `None` — no activity yet
+	// - `Inprogress` — AI is processing
+	// - `Complete` — response ready
+	// - `Failed` — error occurred
+	//
+	Status *GetArchivedConversationsStatus `json:"status,omitzero"`
+	// Error description, populated only when `status` is `Failed`.
+	FailReason *string `json:"failReason,omitzero"`
+	// AI model configuration used
+	ModelInfo *GetArchivedConversationsModelInfo `json:"modelInfo,omitzero"`
+	// Whether this conversation is shared with others
+	IsShared *bool `default:"false" json:"isShared"`
+	// Shareable link if conversation is shared
+	ShareLink *string `json:"shareLink,omitzero"`
+	// Users this conversation is shared with
+	SharedWith []GetArchivedConversationsSharedWith `json:"sharedWith,omitzero"`
+	// Whether this conversation is archived
+	IsArchived *bool `default:"false" json:"isArchived"`
+	// User ID of the last user who archived this row, or `null` after
+	// unarchive cleared the archive state. Absent on rows that have
+	// never been archived.
+	//
+	ArchivedBy optionalnullable.OptionalNullable[string] `json:"archivedBy,omitzero"`
+	// Whether this conversation has been soft-deleted.
+	IsDeleted *bool `default:"false" json:"isDeleted"`
+	// User who soft-deleted this conversation.
+	DeletedBy *string `json:"deletedBy,omitzero"`
+	// Errors recorded against this conversation (e.g. failed message generations).
+	ConversationErrors []GetArchivedConversationsConversationError `json:"conversationErrors,omitzero"`
+	// Free-form metadata attached to the conversation.
+	Metadata map[string]any `json:"metadata,omitzero"`
+	// Unix timestamp of last activity
+	LastActivityAt *int64     `json:"lastActivityAt,omitzero"`
+	CreatedAt      *time.Time `json:"createdAt,omitzero"`
+	UpdatedAt      *time.Time `json:"updatedAt,omitzero"`
+	// Computed per request. `true` when the requesting user is the
+	// conversation's `initiator`.
+	//
+	IsOwner *bool `json:"isOwner,omitzero"`
+	// Computed per request. The requester's effective access level:
+	// their entry in `sharedWith`, or `read` by default.
+	//
+	AccessLevel *GetArchivedConversationsAccessLevel `json:"accessLevel,omitzero"`
+	// Timestamp when the conversation was archived
+	ArchivedAt *time.Time `json:"archivedAt,omitzero"`
+}
+
+func (g GetArchivedConversationsConversation) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsConversation) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsConversation) GetID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ID
+}
+
+func (g *GetArchivedConversationsConversation) GetUserID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.UserID
+}
+
+func (g *GetArchivedConversationsConversation) GetOrgID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.OrgID
+}
+
+func (g *GetArchivedConversationsConversation) GetTitle() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Title
+}
+
+func (g *GetArchivedConversationsConversation) GetInitiator() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Initiator
+}
+
+func (g *GetArchivedConversationsConversation) GetMessages() []components.Message {
+	if g == nil {
+		return nil
+	}
+	return g.Messages
+}
+
+func (g *GetArchivedConversationsConversation) GetStatus() *GetArchivedConversationsStatus {
+	if g == nil {
+		return nil
+	}
+	return g.Status
+}
+
+func (g *GetArchivedConversationsConversation) GetFailReason() *string {
+	if g == nil {
+		return nil
+	}
+	return g.FailReason
+}
+
+func (g *GetArchivedConversationsConversation) GetModelInfo() *GetArchivedConversationsModelInfo {
+	if g == nil {
+		return nil
+	}
+	return g.ModelInfo
+}
+
+func (g *GetArchivedConversationsConversation) GetIsShared() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.IsShared
+}
+
+func (g *GetArchivedConversationsConversation) GetShareLink() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ShareLink
+}
+
+func (g *GetArchivedConversationsConversation) GetSharedWith() []GetArchivedConversationsSharedWith {
+	if g == nil {
+		return nil
+	}
+	return g.SharedWith
+}
+
+func (g *GetArchivedConversationsConversation) GetIsArchived() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.IsArchived
+}
+
+func (g *GetArchivedConversationsConversation) GetArchivedBy() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ArchivedBy
+}
+
+func (g *GetArchivedConversationsConversation) GetIsDeleted() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.IsDeleted
+}
+
+func (g *GetArchivedConversationsConversation) GetDeletedBy() *string {
+	if g == nil {
+		return nil
+	}
+	return g.DeletedBy
+}
+
+func (g *GetArchivedConversationsConversation) GetConversationErrors() []GetArchivedConversationsConversationError {
+	if g == nil {
+		return nil
+	}
+	return g.ConversationErrors
+}
+
+func (g *GetArchivedConversationsConversation) GetMetadata() map[string]any {
+	if g == nil {
+		return nil
+	}
+	return g.Metadata
+}
+
+func (g *GetArchivedConversationsConversation) GetLastActivityAt() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.LastActivityAt
+}
+
+func (g *GetArchivedConversationsConversation) GetCreatedAt() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.CreatedAt
+}
+
+func (g *GetArchivedConversationsConversation) GetUpdatedAt() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.UpdatedAt
+}
+
+func (g *GetArchivedConversationsConversation) GetIsOwner() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.IsOwner
+}
+
+func (g *GetArchivedConversationsConversation) GetAccessLevel() *GetArchivedConversationsAccessLevel {
+	if g == nil {
+		return nil
+	}
+	return g.AccessLevel
+}
+
+func (g *GetArchivedConversationsConversation) GetArchivedAt() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.ArchivedAt
+}
+
 type GetArchivedConversationsPagination struct {
-	Page        *int64 `json:"page,omitzero"`
-	Limit       *int64 `json:"limit,omitzero"`
-	TotalCount  *int64 `json:"totalCount,omitzero"`
-	TotalPages  *int64 `json:"totalPages,omitzero"`
-	HasNextPage *bool  `json:"hasNextPage,omitzero"`
-	HasPrevPage *bool  `json:"hasPrevPage,omitzero"`
+	// Current page number
+	Page *int64 `json:"page,omitzero"`
+	// Items per page
+	Limit *int64 `json:"limit,omitzero"`
+	// Total archived conversations matching the filter
+	TotalCount *int64 `json:"totalCount,omitzero"`
+	// Total pages at the current limit
+	TotalPages *int64 `json:"totalPages,omitzero"`
+	// Whether a next page exists
+	HasNextPage *bool `json:"hasNextPage,omitzero"`
+	// Whether a previous page exists
+	HasPrevPage *bool `json:"hasPrevPage,omitzero"`
 }
 
 func (g *GetArchivedConversationsPagination) GetPage() *int64 {
@@ -59,25 +666,1075 @@ func (g *GetArchivedConversationsPagination) GetHasPrevPage() *bool {
 	return g.HasPrevPage
 }
 
-// GetArchivedConversationsFilters - Applied and available filters
-type GetArchivedConversationsFilters struct {
+type GetArchivedConversationsApplied struct {
+	// Names of filters that were applied
+	Filters []string `json:"filters,omitzero"`
+	// Map of applied filter name to its current value
+	Values map[string]any `json:"values,omitzero"`
 }
 
-type Summary struct {
-	TotalArchived *int64 `json:"totalArchived,omitzero"`
+func (g GetArchivedConversationsApplied) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
 }
 
-func (s *Summary) GetTotalArchived() *int64 {
-	if s == nil {
+func (g *GetArchivedConversationsApplied) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsApplied) GetFilters() []string {
+	if g == nil {
 		return nil
 	}
-	return s.TotalArchived
+	return g.Filters
+}
+
+func (g *GetArchivedConversationsApplied) GetValues() map[string]any {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+type GetArchivedConversationsShared struct {
+	// Allowed values for the `shared` filter
+	Values      []string `json:"values,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	// Current value supplied by the caller, or null
+	Current optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	// Whether this filter was applied on the request
+	Applied *bool `json:"applied,omitzero"`
+}
+
+func (g GetArchivedConversationsShared) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsShared) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsShared) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetArchivedConversationsShared) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsShared) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsShared) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsTags struct {
+	// Expected value type
+	Type        *string                                   `json:"type,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g *GetArchivedConversationsTags) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetArchivedConversationsTags) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsTags) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsTags) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsMinMessages struct {
+	Type        *string                                  `json:"type,omitzero"`
+	Description *string                                  `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[int64] `json:"current,omitzero"`
+	Applied     *bool                                    `json:"applied,omitzero"`
+}
+
+func (g *GetArchivedConversationsMinMessages) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetArchivedConversationsMinMessages) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsMinMessages) GetCurrent() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsMinMessages) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsSearch struct {
+	Type        *string                                   `json:"type,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g *GetArchivedConversationsSearch) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetArchivedConversationsSearch) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsSearch) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsSearch) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsPage struct {
+	Type        *string `json:"type,omitzero"`
+	Current     *int64  `json:"current,omitzero"`
+	Min         *int64  `json:"min,omitzero"`
+	Max         *int64  `json:"max,omitzero"`
+	Default     *int64  `json:"default,omitzero"`
+	Description *string `json:"description,omitzero"`
+	Applied     *bool   `json:"applied,omitzero"`
+}
+
+func (g *GetArchivedConversationsPage) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetArchivedConversationsPage) GetCurrent() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsPage) GetMin() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Min
+}
+
+func (g *GetArchivedConversationsPage) GetMax() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Max
+}
+
+func (g *GetArchivedConversationsPage) GetDefault() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetArchivedConversationsPage) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsPage) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsLimit struct {
+	Type        *string `json:"type,omitzero"`
+	Current     *int64  `json:"current,omitzero"`
+	Min         *int64  `json:"min,omitzero"`
+	Max         *int64  `json:"max,omitzero"`
+	Default     *int64  `json:"default,omitzero"`
+	Description *string `json:"description,omitzero"`
+	Applied     *bool   `json:"applied,omitzero"`
+}
+
+func (g *GetArchivedConversationsLimit) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetArchivedConversationsLimit) GetCurrent() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsLimit) GetMin() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Min
+}
+
+func (g *GetArchivedConversationsLimit) GetMax() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Max
+}
+
+func (g *GetArchivedConversationsLimit) GetDefault() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetArchivedConversationsLimit) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsLimit) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsAvailablePagination struct {
+	Page  *GetArchivedConversationsPage  `json:"page,omitzero"`
+	Limit *GetArchivedConversationsLimit `json:"limit,omitzero"`
+}
+
+func (g GetArchivedConversationsAvailablePagination) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsAvailablePagination) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsAvailablePagination) GetPage() *GetArchivedConversationsPage {
+	if g == nil {
+		return nil
+	}
+	return g.Page
+}
+
+func (g *GetArchivedConversationsAvailablePagination) GetLimit() *GetArchivedConversationsLimit {
+	if g == nil {
+		return nil
+	}
+	return g.Limit
+}
+
+type GetArchivedConversationsSortingSortBy struct {
+	Values      []string `json:"values,omitzero"`
+	Default     *string  `json:"default,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	Current     *string  `json:"current,omitzero"`
+	Applied     *bool    `json:"applied,omitzero"`
+}
+
+func (g GetArchivedConversationsSortingSortBy) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSortingSortBy) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSortingSortBy) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetArchivedConversationsSortingSortBy) GetDefault() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetArchivedConversationsSortingSortBy) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsSortingSortBy) GetCurrent() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsSortingSortBy) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type SortingValue string
+
+const (
+	SortingValueAsc  SortingValue = "asc"
+	SortingValueDesc SortingValue = "desc"
+)
+
+func (e SortingValue) ToPointer() *SortingValue {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SortingValue) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "asc", "desc":
+			return true
+		}
+	}
+	return false
+}
+
+type SortingDefault string
+
+const (
+	SortingDefaultAsc  SortingDefault = "asc"
+	SortingDefaultDesc SortingDefault = "desc"
+)
+
+func (e SortingDefault) ToPointer() *SortingDefault {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SortingDefault) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "asc", "desc":
+			return true
+		}
+	}
+	return false
+}
+
+type SortingCurrent string
+
+const (
+	SortingCurrentAsc  SortingCurrent = "asc"
+	SortingCurrentDesc SortingCurrent = "desc"
+)
+
+func (e SortingCurrent) ToPointer() *SortingCurrent {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SortingCurrent) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "asc", "desc":
+			return true
+		}
+	}
+	return false
+}
+
+type GetArchivedConversationsSortingSortOrder struct {
+	Values      []SortingValue  `json:"values,omitzero"`
+	Default     *SortingDefault `json:"default,omitzero"`
+	Description *string         `json:"description,omitzero"`
+	Current     *SortingCurrent `json:"current,omitzero"`
+	Applied     *bool           `json:"applied,omitzero"`
+}
+
+func (g GetArchivedConversationsSortingSortOrder) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSortingSortOrder) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSortingSortOrder) GetValues() []SortingValue {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetArchivedConversationsSortingSortOrder) GetDefault() *SortingDefault {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetArchivedConversationsSortingSortOrder) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsSortingSortOrder) GetCurrent() *SortingCurrent {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsSortingSortOrder) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsSorting struct {
+	SortBy    *GetArchivedConversationsSortingSortBy    `json:"sortBy,omitzero"`
+	SortOrder *GetArchivedConversationsSortingSortOrder `json:"sortOrder,omitzero"`
+}
+
+func (g GetArchivedConversationsSorting) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSorting) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSorting) GetSortBy() *GetArchivedConversationsSortingSortBy {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetArchivedConversationsSorting) GetSortOrder() *GetArchivedConversationsSortingSortOrder {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+type GetArchivedConversationsDateRangeCurrent struct {
+	Start optionalnullable.OptionalNullable[time.Time] `json:"start,omitzero"`
+	End   optionalnullable.OptionalNullable[time.Time] `json:"end,omitzero"`
+}
+
+func (g GetArchivedConversationsDateRangeCurrent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsDateRangeCurrent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsDateRangeCurrent) GetStart() optionalnullable.OptionalNullable[time.Time] {
+	if g == nil {
+		return nil
+	}
+	return g.Start
+}
+
+func (g *GetArchivedConversationsDateRangeCurrent) GetEnd() optionalnullable.OptionalNullable[time.Time] {
+	if g == nil {
+		return nil
+	}
+	return g.End
+}
+
+type GetArchivedConversationsDateRange struct {
+	Type        *string `json:"type,omitzero"`
+	Description *string `json:"description,omitzero"`
+	// Expected date format for `startDate` and `endDate` inputs
+	Format  *string                                   `json:"format,omitzero"`
+	Current *GetArchivedConversationsDateRangeCurrent `json:"current,omitzero"`
+	Applied *bool                                     `json:"applied,omitzero"`
+}
+
+func (g GetArchivedConversationsDateRange) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsDateRange) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsDateRange) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetArchivedConversationsDateRange) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsDateRange) GetFormat() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Format
+}
+
+func (g *GetArchivedConversationsDateRange) GetCurrent() *GetArchivedConversationsDateRangeCurrent {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsDateRange) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsDateFilters struct {
+	DateRange *GetArchivedConversationsDateRange `json:"dateRange,omitzero"`
+}
+
+func (g GetArchivedConversationsDateFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsDateFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsDateFilters) GetDateRange() *GetArchivedConversationsDateRange {
+	if g == nil {
+		return nil
+	}
+	return g.DateRange
+}
+
+type GetArchivedConversationsMessageType struct {
+	Values      []string                                  `json:"values,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g GetArchivedConversationsMessageType) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsMessageType) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsMessageType) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetArchivedConversationsMessageType) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsMessageType) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetArchivedConversationsMessageType) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetArchivedConversationsMessageFilters struct {
+	MessageType *GetArchivedConversationsMessageType `json:"messageType,omitzero"`
+}
+
+func (g GetArchivedConversationsMessageFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsMessageFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsMessageFilters) GetMessageType() *GetArchivedConversationsMessageType {
+	if g == nil {
+		return nil
+	}
+	return g.MessageType
+}
+
+type GetArchivedConversationsSortingMessagesSortBy struct {
+	Values      []string `json:"values,omitzero"`
+	Default     *string  `json:"default,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	Current     *string  `json:"current,omitzero"`
+}
+
+func (g GetArchivedConversationsSortingMessagesSortBy) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortBy) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortBy) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortBy) GetDefault() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortBy) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortBy) GetCurrent() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+type SortingMessagesValue string
+
+const (
+	SortingMessagesValueAsc  SortingMessagesValue = "asc"
+	SortingMessagesValueDesc SortingMessagesValue = "desc"
+)
+
+func (e SortingMessagesValue) ToPointer() *SortingMessagesValue {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SortingMessagesValue) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "asc", "desc":
+			return true
+		}
+	}
+	return false
+}
+
+type SortingMessagesDefault string
+
+const (
+	SortingMessagesDefaultAsc  SortingMessagesDefault = "asc"
+	SortingMessagesDefaultDesc SortingMessagesDefault = "desc"
+)
+
+func (e SortingMessagesDefault) ToPointer() *SortingMessagesDefault {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SortingMessagesDefault) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "asc", "desc":
+			return true
+		}
+	}
+	return false
+}
+
+type SortingMessagesCurrent string
+
+const (
+	SortingMessagesCurrentAsc  SortingMessagesCurrent = "asc"
+	SortingMessagesCurrentDesc SortingMessagesCurrent = "desc"
+)
+
+func (e SortingMessagesCurrent) ToPointer() *SortingMessagesCurrent {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SortingMessagesCurrent) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "asc", "desc":
+			return true
+		}
+	}
+	return false
+}
+
+type GetArchivedConversationsSortingMessagesSortOrder struct {
+	Values      []SortingMessagesValue  `json:"values,omitzero"`
+	Default     *SortingMessagesDefault `json:"default,omitzero"`
+	Description *string                 `json:"description,omitzero"`
+	Current     *SortingMessagesCurrent `json:"current,omitzero"`
+}
+
+func (g GetArchivedConversationsSortingMessagesSortOrder) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortOrder) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortOrder) GetValues() []SortingMessagesValue {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortOrder) GetDefault() *SortingMessagesDefault {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortOrder) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetArchivedConversationsSortingMessagesSortOrder) GetCurrent() *SortingMessagesCurrent {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+type GetArchivedConversationsSortingMessages struct {
+	SortBy    *GetArchivedConversationsSortingMessagesSortBy    `json:"sortBy,omitzero"`
+	SortOrder *GetArchivedConversationsSortingMessagesSortOrder `json:"sortOrder,omitzero"`
+}
+
+func (g GetArchivedConversationsSortingMessages) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSortingMessages) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSortingMessages) GetSortBy() *GetArchivedConversationsSortingMessagesSortBy {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetArchivedConversationsSortingMessages) GetSortOrder() *GetArchivedConversationsSortingMessagesSortOrder {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+// GetArchivedConversationsAvailable - Describes filters supported by this endpoint and their current values
+type GetArchivedConversationsAvailable struct {
+	Shared          *GetArchivedConversationsShared              `json:"shared,omitzero"`
+	Tags            *GetArchivedConversationsTags                `json:"tags,omitzero"`
+	MinMessages     *GetArchivedConversationsMinMessages         `json:"minMessages,omitzero"`
+	Search          *GetArchivedConversationsSearch              `json:"search,omitzero"`
+	Pagination      *GetArchivedConversationsAvailablePagination `json:"pagination,omitzero"`
+	Sorting         *GetArchivedConversationsSorting             `json:"sorting,omitzero"`
+	DateFilters     *GetArchivedConversationsDateFilters         `json:"dateFilters,omitzero"`
+	MessageFilters  *GetArchivedConversationsMessageFilters      `json:"messageFilters,omitzero"`
+	SortingMessages *GetArchivedConversationsSortingMessages     `json:"sortingMessages,omitzero"`
+}
+
+func (g GetArchivedConversationsAvailable) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsAvailable) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsAvailable) GetShared() *GetArchivedConversationsShared {
+	if g == nil {
+		return nil
+	}
+	return g.Shared
+}
+
+func (g *GetArchivedConversationsAvailable) GetTags() *GetArchivedConversationsTags {
+	if g == nil {
+		return nil
+	}
+	return g.Tags
+}
+
+func (g *GetArchivedConversationsAvailable) GetMinMessages() *GetArchivedConversationsMinMessages {
+	if g == nil {
+		return nil
+	}
+	return g.MinMessages
+}
+
+func (g *GetArchivedConversationsAvailable) GetSearch() *GetArchivedConversationsSearch {
+	if g == nil {
+		return nil
+	}
+	return g.Search
+}
+
+func (g *GetArchivedConversationsAvailable) GetPagination() *GetArchivedConversationsAvailablePagination {
+	if g == nil {
+		return nil
+	}
+	return g.Pagination
+}
+
+func (g *GetArchivedConversationsAvailable) GetSorting() *GetArchivedConversationsSorting {
+	if g == nil {
+		return nil
+	}
+	return g.Sorting
+}
+
+func (g *GetArchivedConversationsAvailable) GetDateFilters() *GetArchivedConversationsDateFilters {
+	if g == nil {
+		return nil
+	}
+	return g.DateFilters
+}
+
+func (g *GetArchivedConversationsAvailable) GetMessageFilters() *GetArchivedConversationsMessageFilters {
+	if g == nil {
+		return nil
+	}
+	return g.MessageFilters
+}
+
+func (g *GetArchivedConversationsAvailable) GetSortingMessages() *GetArchivedConversationsSortingMessages {
+	if g == nil {
+		return nil
+	}
+	return g.SortingMessages
+}
+
+// GetArchivedConversationsFilters - Filters applied to this request and filters available for clients to use
+type GetArchivedConversationsFilters struct {
+	Applied *GetArchivedConversationsApplied `json:"applied,omitzero"`
+	// Describes filters supported by this endpoint and their current values
+	Available *GetArchivedConversationsAvailable `json:"available,omitzero"`
+}
+
+func (g GetArchivedConversationsFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsFilters) GetApplied() *GetArchivedConversationsApplied {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+func (g *GetArchivedConversationsFilters) GetAvailable() *GetArchivedConversationsAvailable {
+	if g == nil {
+		return nil
+	}
+	return g.Available
+}
+
+type GetArchivedConversationsSummary struct {
+	// Total archived conversations matching the filter
+	TotalArchived *int64 `json:"totalArchived,omitzero"`
+	// Archive timestamp of the first item in the current page
+	OldestArchive *time.Time `json:"oldestArchive,omitzero"`
+	// Archive timestamp of the last item in the current page
+	NewestArchive *time.Time `json:"newestArchive,omitzero"`
+}
+
+func (g GetArchivedConversationsSummary) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetArchivedConversationsSummary) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetArchivedConversationsSummary) GetTotalArchived() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.TotalArchived
+}
+
+func (g *GetArchivedConversationsSummary) GetOldestArchive() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.OldestArchive
+}
+
+func (g *GetArchivedConversationsSummary) GetNewestArchive() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.NewestArchive
 }
 
 type GetArchivedConversationsMeta struct {
-	RequestID *string    `json:"requestId,omitzero"`
+	// Request correlation identifier
+	RequestID *string `json:"requestId,omitzero"`
+	// Response generation timestamp
 	Timestamp *time.Time `json:"timestamp,omitzero"`
-	Duration  *int64     `json:"duration,omitzero"`
+	// Server processing time in milliseconds
+	Duration *int64 `json:"duration,omitzero"`
 }
 
 func (g GetArchivedConversationsMeta) MarshalJSON() ([]byte, error) {
@@ -114,11 +1771,12 @@ func (g *GetArchivedConversationsMeta) GetDuration() *int64 {
 
 // GetArchivedConversationsResponseBody - List of archived conversations
 type GetArchivedConversationsResponseBody struct {
-	Conversations []components.Conversation           `json:"conversations,omitzero"`
-	Pagination    *GetArchivedConversationsPagination `json:"pagination,omitzero"`
-	// Applied and available filters
+	// Archived conversations matching the filter
+	Conversations []GetArchivedConversationsConversation `json:"conversations,omitzero"`
+	Pagination    *GetArchivedConversationsPagination    `json:"pagination,omitzero"`
+	// Filters applied to this request and filters available for clients to use
 	Filters *GetArchivedConversationsFilters `json:"filters,omitzero"`
-	Summary *Summary                         `json:"summary,omitzero"`
+	Summary *GetArchivedConversationsSummary `json:"summary,omitzero"`
 	Meta    *GetArchivedConversationsMeta    `json:"meta,omitzero"`
 }
 
@@ -133,7 +1791,7 @@ func (g *GetArchivedConversationsResponseBody) UnmarshalJSON(data []byte) error 
 	return nil
 }
 
-func (g *GetArchivedConversationsResponseBody) GetConversations() []components.Conversation {
+func (g *GetArchivedConversationsResponseBody) GetConversations() []GetArchivedConversationsConversation {
 	if g == nil {
 		return nil
 	}
@@ -154,7 +1812,7 @@ func (g *GetArchivedConversationsResponseBody) GetFilters() *GetArchivedConversa
 	return g.Filters
 }
 
-func (g *GetArchivedConversationsResponseBody) GetSummary() *Summary {
+func (g *GetArchivedConversationsResponseBody) GetSummary() *GetArchivedConversationsSummary {
 	if g == nil {
 		return nil
 	}

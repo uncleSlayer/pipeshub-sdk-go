@@ -64,7 +64,7 @@ func (e *ContentFormat) IsExact() bool {
 	return false
 }
 
-type MessageMetadata struct {
+type Metadata struct {
 	// Time taken to generate response in milliseconds
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	// Version of the AI model used
@@ -75,32 +75,104 @@ type MessageMetadata struct {
 	Reason *string `json:"reason,omitzero"`
 }
 
-func (m *MessageMetadata) GetProcessingTimeMs() *float64 {
+func (m *Metadata) GetProcessingTimeMs() *float64 {
 	if m == nil {
 		return nil
 	}
 	return m.ProcessingTimeMs
 }
 
-func (m *MessageMetadata) GetModelVersion() *string {
+func (m *Metadata) GetModelVersion() *string {
 	if m == nil {
 		return nil
 	}
 	return m.ModelVersion
 }
 
-func (m *MessageMetadata) GetAiTransactionID() *string {
+func (m *Metadata) GetAiTransactionID() *string {
 	if m == nil {
 		return nil
 	}
 	return m.AiTransactionID
 }
 
-func (m *MessageMetadata) GetReason() *string {
+func (m *Metadata) GetReason() *string {
 	if m == nil {
 		return nil
 	}
 	return m.Reason
+}
+
+type ReferenceDatum struct {
+	// Display name shown to the user.
+	Name *string `json:"name,omitzero"`
+	// Technical identifier (numeric ID, UUID, etc.).
+	ID *string `json:"id,omitzero"`
+	// Item type (e.g. `project`, `issue`, `file`, `notebook`, `page`).
+	Type *string `json:"type,omitzero"`
+	// Source application (e.g. `jira`, `confluence`, `sharepoint`,
+	// `slack`, `drive`, `gmail`).
+	//
+	App *string `json:"app,omitzero"`
+	// URL to open the item in a browser.
+	WebURL *string `json:"webUrl,omitzero"`
+	// App-specific fields keyed by name (e.g. `key` for a Jira project,
+	// `siteId` for a SharePoint document).
+	//
+	Metadata map[string]string `json:"metadata,omitzero"`
+}
+
+func (r ReferenceDatum) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
+}
+
+func (r *ReferenceDatum) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *ReferenceDatum) GetName() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Name
+}
+
+func (r *ReferenceDatum) GetID() *string {
+	if r == nil {
+		return nil
+	}
+	return r.ID
+}
+
+func (r *ReferenceDatum) GetType() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Type
+}
+
+func (r *ReferenceDatum) GetApp() *string {
+	if r == nil {
+		return nil
+	}
+	return r.App
+}
+
+func (r *ReferenceDatum) GetWebURL() *string {
+	if r == nil {
+		return nil
+	}
+	return r.WebURL
+}
+
+func (r *ReferenceDatum) GetMetadata() map[string]string {
+	if r == nil {
+		return nil
+	}
+	return r.Metadata
 }
 
 // Message - A single message within a conversation. Messages can be user queries,
@@ -129,10 +201,23 @@ type Message struct {
 	// Suggested follow-up questions
 	FollowUpQuestions []FollowUpQuestion `json:"followUpQuestions,omitzero"`
 	// User feedback on this message
-	Feedback  []MessageFeedback `json:"feedback,omitzero"`
-	Metadata  *MessageMetadata  `json:"metadata,omitzero"`
-	CreatedAt *time.Time        `json:"createdAt,omitzero"`
-	UpdatedAt *time.Time        `json:"updatedAt,omitzero"`
+	Feedback []MessageFeedback `json:"feedback,omitzero"`
+	Metadata *Metadata         `json:"metadata,omitzero"`
+	// AI model configuration recorded against a conversation or message.
+	ModelInfo *ConversationModelInfo `json:"modelInfo,omitzero"`
+	// Rich filter state selected by the user, used for display and persistence only.
+	// This mirrors the active selection shown in the UI and is distinct from the
+	// machine-readable `filters` field used for retrieval scoping.
+	//
+	AppliedFilters *AppliedFilters `json:"appliedFilters,omitzero"`
+	// Reference identifiers extracted from tool responses, used to scope
+	// follow-up queries (for example Jira project keys or record IDs).
+	//
+	ReferenceData []ReferenceDatum `json:"referenceData,omitzero"`
+	// Files or media attached to this message
+	Attachments []map[string]any `json:"attachments,omitzero"`
+	CreatedAt   *time.Time       `json:"createdAt,omitzero"`
+	UpdatedAt   *time.Time       `json:"updatedAt,omitzero"`
 }
 
 func (m Message) MarshalJSON() ([]byte, error) {
@@ -202,11 +287,39 @@ func (m *Message) GetFeedback() []MessageFeedback {
 	return m.Feedback
 }
 
-func (m *Message) GetMetadata() *MessageMetadata {
+func (m *Message) GetMetadata() *Metadata {
 	if m == nil {
 		return nil
 	}
 	return m.Metadata
+}
+
+func (m *Message) GetModelInfo() *ConversationModelInfo {
+	if m == nil {
+		return nil
+	}
+	return m.ModelInfo
+}
+
+func (m *Message) GetAppliedFilters() *AppliedFilters {
+	if m == nil {
+		return nil
+	}
+	return m.AppliedFilters
+}
+
+func (m *Message) GetReferenceData() []ReferenceDatum {
+	if m == nil {
+		return nil
+	}
+	return m.ReferenceData
+}
+
+func (m *Message) GetAttachments() []map[string]any {
+	if m == nil {
+		return nil
+	}
+	return m.Attachments
 }
 
 func (m *Message) GetCreatedAt() *time.Time {

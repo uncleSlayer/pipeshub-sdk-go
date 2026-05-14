@@ -3,15 +3,133 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
+// SearchHistorySortBy - Field used to sort results. Any value other than `createdAt`,
+// `lastActivityAt`, or `title` is treated as `lastActivityAt`.
+type SearchHistorySortBy string
+
+const (
+	SearchHistorySortByCreatedAt      SearchHistorySortBy = "createdAt"
+	SearchHistorySortByLastActivityAt SearchHistorySortBy = "lastActivityAt"
+	SearchHistorySortByTitle          SearchHistorySortBy = "title"
+)
+
+func (e SearchHistorySortBy) ToPointer() *SearchHistorySortBy {
+	return &e
+}
+func (e *SearchHistorySortBy) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "createdAt":
+		fallthrough
+	case "lastActivityAt":
+		fallthrough
+	case "title":
+		*e = SearchHistorySortBy(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for SearchHistorySortBy: %v", v)
+	}
+}
+
+// SearchHistorySortOrder - Sort direction applied to `sortBy`.
+type SearchHistorySortOrder string
+
+const (
+	SearchHistorySortOrderAsc  SearchHistorySortOrder = "asc"
+	SearchHistorySortOrderDesc SearchHistorySortOrder = "desc"
+)
+
+func (e SearchHistorySortOrder) ToPointer() *SearchHistorySortOrder {
+	return &e
+}
+func (e *SearchHistorySortOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "asc":
+		fallthrough
+	case "desc":
+		*e = SearchHistorySortOrder(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for SearchHistorySortOrder: %v", v)
+	}
+}
+
+// SearchHistoryShared - Filter results by their shared status. Accepted values are
+// `'true'` / `'1'` (return only shared searches) and
+// `'false'` / `'0'` (exclude shared searches). Matching is
+// case-insensitive and surrounding whitespace is trimmed.
+type SearchHistoryShared string
+
+const (
+	SearchHistorySharedTrue  SearchHistoryShared = "true"
+	SearchHistorySharedFalse SearchHistoryShared = "false"
+	SearchHistorySharedOne   SearchHistoryShared = "1"
+	SearchHistorySharedZero  SearchHistoryShared = "0"
+)
+
+func (e SearchHistoryShared) ToPointer() *SearchHistoryShared {
+	return &e
+}
+func (e *SearchHistoryShared) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = SearchHistoryShared(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for SearchHistoryShared: %v", v)
+	}
+}
+
 type SearchHistoryRequest struct {
-	// Number of results per page
-	Limit *int64 `default:"10" queryParam:"style=form,explode=true,name=limit"`
-	// Page number
+	// Page number to return. Must be within `[1, 1000]`.
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Number of items per page. Values are clamped to the range `[1, 100]`.
+	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
+	// Field used to sort results. Any value other than `createdAt`,
+	// `lastActivityAt`, or `title` is treated as `lastActivityAt`.
+	//
+	SortBy *SearchHistorySortBy `default:"lastActivityAt" queryParam:"style=form,explode=true,name=sortBy"`
+	// Sort direction applied to `sortBy`.
+	SortOrder *SearchHistorySortOrder `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
+	// Case-insensitive substring to match against a search's title and
+	// message content. Regex metacharacters are escaped automatically.
+	// Values longer than 1000 characters are rejected with `400`.
+	//
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Filter results by their shared status. Accepted values are
+	// `'true'` / `'1'` (return only shared searches) and
+	// `'false'` / `'0'` (exclude shared searches). Matching is
+	// case-insensitive and surrounding whitespace is trimmed.
+	//
+	Shared *SearchHistoryShared `queryParam:"style=form,explode=true,name=shared"`
+	// ISO 8601 timestamp used as the lower bound for a search's creation date.
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 timestamp used as the upper bound for a search's creation date.
+	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (s SearchHistoryRequest) MarshalJSON() ([]byte, error) {
@@ -25,13 +143,6 @@ func (s *SearchHistoryRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *SearchHistoryRequest) GetLimit() *int64 {
-	if s == nil {
-		return nil
-	}
-	return s.Limit
-}
-
 func (s *SearchHistoryRequest) GetPage() *int64 {
 	if s == nil {
 		return nil
@@ -39,58 +150,166 @@ func (s *SearchHistoryRequest) GetPage() *int64 {
 	return s.Page
 }
 
-// SearchHistoryResponseBody - Search history with pagination
-type SearchHistoryResponseBody struct {
-	Results []components.SearchResult `json:"results,omitzero"`
-	// Total number of searches
-	Total *int64 `json:"total,omitzero"`
-	Page  *int64 `json:"page,omitzero"`
-	Limit *int64 `json:"limit,omitzero"`
-}
-
-func (s SearchHistoryResponseBody) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(s, "", false)
-}
-
-func (s *SearchHistoryResponseBody) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *SearchHistoryResponseBody) GetResults() []components.SearchResult {
-	if s == nil {
-		return nil
-	}
-	return s.Results
-}
-
-func (s *SearchHistoryResponseBody) GetTotal() *int64 {
-	if s == nil {
-		return nil
-	}
-	return s.Total
-}
-
-func (s *SearchHistoryResponseBody) GetPage() *int64 {
-	if s == nil {
-		return nil
-	}
-	return s.Page
-}
-
-func (s *SearchHistoryResponseBody) GetLimit() *int64 {
+func (s *SearchHistoryRequest) GetLimit() *int64 {
 	if s == nil {
 		return nil
 	}
 	return s.Limit
 }
 
+func (s *SearchHistoryRequest) GetSortBy() *SearchHistorySortBy {
+	if s == nil {
+		return nil
+	}
+	return s.SortBy
+}
+
+func (s *SearchHistoryRequest) GetSortOrder() *SearchHistorySortOrder {
+	if s == nil {
+		return nil
+	}
+	return s.SortOrder
+}
+
+func (s *SearchHistoryRequest) GetSearch() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Search
+}
+
+func (s *SearchHistoryRequest) GetShared() *SearchHistoryShared {
+	if s == nil {
+		return nil
+	}
+	return s.Shared
+}
+
+func (s *SearchHistoryRequest) GetStartDate() *time.Time {
+	if s == nil {
+		return nil
+	}
+	return s.StartDate
+}
+
+func (s *SearchHistoryRequest) GetEndDate() *time.Time {
+	if s == nil {
+		return nil
+	}
+	return s.EndDate
+}
+
+// SearchHistoryInternalServerErrorError - Error payload.
+type SearchHistoryInternalServerErrorError struct {
+	// Machine-readable error code. For this status the
+	// value is `HTTP_INTERNAL_SERVER_ERROR` for an
+	// explicit server-side failure, or `INTERNAL_ERROR`
+	// for an unhandled exception coerced by the global
+	// error middleware.
+	//
+	Code string `json:"code"`
+	// Human-readable description of the failure.
+	Message string `json:"message"`
+}
+
+func (s *SearchHistoryInternalServerErrorError) GetCode() string {
+	if s == nil {
+		return ""
+	}
+	return s.Code
+}
+
+func (s *SearchHistoryInternalServerErrorError) GetMessage() string {
+	if s == nil {
+		return ""
+	}
+	return s.Message
+}
+
+// SearchHistoryForbiddenError - Error payload.
+type SearchHistoryForbiddenError struct {
+	// Machine-readable error code. For this status the
+	// value is `HTTP_FORBIDDEN` (the token is valid but
+	// does not carry the `semantic:read` scope).
+	//
+	Code string `json:"code"`
+	// Human-readable description of the failure.
+	Message string `json:"message"`
+}
+
+func (s *SearchHistoryForbiddenError) GetCode() string {
+	if s == nil {
+		return ""
+	}
+	return s.Code
+}
+
+func (s *SearchHistoryForbiddenError) GetMessage() string {
+	if s == nil {
+		return ""
+	}
+	return s.Message
+}
+
+// SearchHistoryUnauthorizedError - Error payload.
+type SearchHistoryUnauthorizedError struct {
+	// Machine-readable error code. For this status the
+	// value is `HTTP_UNAUTHORIZED` (missing, invalid, or
+	// expired bearer token, user no longer exists, or the
+	// session has been invalidated).
+	//
+	Code string `json:"code"`
+	// Human-readable description of the failure.
+	Message string `json:"message"`
+}
+
+func (s *SearchHistoryUnauthorizedError) GetCode() string {
+	if s == nil {
+		return ""
+	}
+	return s.Code
+}
+
+func (s *SearchHistoryUnauthorizedError) GetMessage() string {
+	if s == nil {
+		return ""
+	}
+	return s.Message
+}
+
+// SearchHistoryBadRequestError - Error payload.
+type SearchHistoryBadRequestError struct {
+	// Machine-readable error code. For this status the
+	// value is either `VALIDATION_ERROR` (request failed
+	// schema validation) or `HTTP_BAD_REQUEST` (semantic
+	// validation failed — malformed date, value over the
+	// allowed length, or XSS-guard trip).
+	//
+	Code string `json:"code"`
+	// Human-readable description of the failure.
+	Message string `json:"message"`
+}
+
+func (s *SearchHistoryBadRequestError) GetCode() string {
+	if s == nil {
+		return ""
+	}
+	return s.Code
+}
+
+func (s *SearchHistoryBadRequestError) GetMessage() string {
+	if s == nil {
+		return ""
+	}
+	return s.Message
+}
+
 type SearchHistoryResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Search history with pagination
-	Object *SearchHistoryResponseBody
+	// Persisted search history plus pagination, applied/available filter
+	// metadata, and a request-scoped `meta` block.
+	//
+	SemanticSearchHistoryResponse *components.SemanticSearchHistoryResponse
 }
 
 func (s SearchHistoryResponse) MarshalJSON() ([]byte, error) {
@@ -111,9 +330,9 @@ func (s *SearchHistoryResponse) GetHTTPMeta() components.HTTPMetadata {
 	return s.HTTPMeta
 }
 
-func (s *SearchHistoryResponse) GetObject() *SearchHistoryResponseBody {
+func (s *SearchHistoryResponse) GetSemanticSearchHistoryResponse() *components.SemanticSearchHistoryResponse {
 	if s == nil {
 		return nil
 	}
-	return s.Object
+	return s.SemanticSearchHistoryResponse
 }

@@ -4,45 +4,30 @@
 
 ### Available Operations
 
-* [Execute](#execute) - Perform semantic search
-* [GetHistory](#gethistory) - Get search history
-* [DeleteAllHistory](#deleteallhistory) - Clear all search history
-* [GetByID](#getbyid) - Get search by ID
-* [Delete](#delete) - Delete search by ID
-* [Share](#share) - Share a search
-* [Unshare](#unshare) - Unshare a search
-* [Archive](#archive) - Archive a search
-* [Unarchive](#unarchive) - Unarchive a search
+* [Search](#search) - Perform semantic search
+* [SearchHistory](#searchhistory) - Get search history
+* [DeleteSearchHistory](#deletesearchhistory) - Clear all search history
+* [GetSearchByID](#getsearchbyid) - Get search by ID
+* [DeleteSearchByID](#deletesearchbyid) - Delete search by ID
+* [ArchiveSearch](#archivesearch) - Archive a search
+* [UnarchiveSearch](#unarchivesearch) - Unarchive a search
 
-## Execute
+## Search
 
-Execute a semantic search across your organization's knowledge base.<br><br>
-<b>Overview:</b><br>
-Semantic search uses AI embeddings to find content based on meaning,
-not just keyword matching. This enables finding relevant information
-even when the exact words differ.<br><br>
-<b>How It Works:</b><br>
-<ol>
-<li>Your query is converted to a vector embedding</li>
-<li>The system finds documents with similar semantic meaning</li>
-<li>Results are ranked by relevance score</li>
-<li>Matching chunks are returned with metadata</li>
-</ol>
-<b>Filtering:</b><br>
-Use filters to narrow your search:
-<ul>
-<li><code>filters.apps</code>: Limit to specific connector apps (Google Drive, Confluence, etc.)</li>
-<li><code>filters.kb</code>: Limit to specific knowledge bases</li>
-</ul>
-<b>Results:</b><br>
-Each result includes:
-<ul>
-<li>Matching content chunk</li>
-<li>Relevance score (0-1, higher is better)</li>
-<li>Source document metadata (name, URL, type)</li>
-</ul>
-<b>Search History:</b><br>
-All searches are saved and can be retrieved via <code>GET /search</code>.
+Run a semantic search across your organization's knowledge base.
+Matching is meaning-based, so relevant results surface even when
+the wording differs from the query.
+
+Use optional `filters` to narrow the scope:
+
+- `filters.apps` — restrict to specific connector apps (for
+  example Google Drive or Confluence).
+- `filters.kb` — restrict to specific knowledge bases.
+
+The response returns a `searchId` for the persisted search along
+with ranked matches, each carrying a relevance score and the
+source document's metadata. Past searches can be retrieved via
+`GET /search`.
 
 
 ### Example Usage: filtered
@@ -68,11 +53,11 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.Execute(ctx, components.SemanticSearchRequest{
+    res, err := s.SemanticSearch.Search(ctx, components.SemanticSearchRequest{
         Query: "API documentation examples",
         Filters: &components.Filters{
-            Apps: []components.AppType{
-                components.AppTypeDrive,
+            Apps: []string{
+                "drive",
             },
         },
         Limit: pipeshub.Pointer[int64](20),
@@ -80,7 +65,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.SearchResult != nil {
+    if res.SemanticSearchExecuteResponse != nil {
         // handle response
     }
 }
@@ -108,13 +93,13 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.Execute(ctx, components.SemanticSearchRequest{
+    res, err := s.SemanticSearch.Search(ctx, components.SemanticSearchRequest{
         Query: "company vacation policy",
     })
     if err != nil {
         log.Fatal(err)
     }
-    if res.SearchResult != nil {
+    if res.SemanticSearchExecuteResponse != nil {
         // handle response
     }
 }
@@ -138,14 +123,18 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## GetHistory
+## SearchHistory
 
-Retrieve your search history with pagination.<br><br>
-<b>Overview:</b><br>
-Returns a list of all searches performed by the authenticated user.
-Each entry includes the original query, results, and metadata.<br><br>
-<b>Pagination:</b><br>
-Use <code>page</code> and <code>limit</code> to navigate through results.
+Retrieve the authenticated user's persisted search history.
+
+Returns searches the user owns along with searches shared with them,
+scoped to the caller's organization. Archived and deleted entries are
+excluded. Citation references on this endpoint are returned as raw
+identifier strings; use `GET /search/{searchId}` to fetch a single
+search with its citations fully expanded.
+
+Pagination defaults to `page=1, limit=20` (maximum `limit` is 100).
+Results are sorted by most recent activity by default.
 
 
 ### Example Usage
@@ -159,6 +148,7 @@ import(
 	"os"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 )
 
@@ -171,11 +161,11 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.GetHistory(ctx, pipeshub.Pointer[int64](10), pipeshub.Pointer[int64](1))
+    res, err := s.SemanticSearch.SearchHistory(ctx, operations.SearchHistoryRequest{})
     if err != nil {
         log.Fatal(err)
     }
-    if res.Object != nil {
+    if res.SemanticSearchHistoryResponse != nil {
         // handle response
     }
 }
@@ -183,12 +173,11 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `limit`                                                  | **int64*                                                 | :heavy_minus_sign:                                       | Number of results per page                               |
-| `page`                                                   | **int64*                                                 | :heavy_minus_sign:                                       | Page number                                              |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                          | Type                                                                               | Required                                                                           | Description                                                                        |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `ctx`                                                                              | [context.Context](https://pkg.go.dev/context#Context)                              | :heavy_check_mark:                                                                 | The context to use for the request.                                                |
+| `request`                                                                          | [operations.SearchHistoryRequest](../../models/operations/searchhistoryrequest.md) | :heavy_check_mark:                                                                 | The request object to use for the request.                                         |
+| `opts`                                                                             | [][operations.Option](../../models/operations/option.md)                           | :heavy_minus_sign:                                                                 | The options for this request.                                                      |
 
 ### Response
 
@@ -196,20 +185,29 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type                                 | Status Code                                | Content Type                               |
+| ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
+| apierrors.SearchHistoryBadRequestError     | 400                                        | application/json                           |
+| apierrors.SearchHistoryUnauthorizedError   | 401                                        | application/json                           |
+| apierrors.SearchHistoryForbiddenError      | 403                                        | application/json                           |
+| apierrors.SearchHistoryInternalServerError | 500                                        | application/json                           |
+| apierrors.APIError                         | 4XX, 5XX                                   | \*/\*                                      |
 
-## DeleteAllHistory
+## DeleteSearchHistory
 
-Delete all search history for the authenticated user.<br><br>
-<b>Warning:</b><br>
-This action cannot be undone. All saved searches will be permanently removed.
+Permanently delete every persisted search row owned by, or shared
+with, the authenticated user, along with the citation rows those
+searches reference. The action cannot be undone.
+
+Scoped to the caller's org and limited to rows where
+`isDeleted: false` and `isArchived: false`. If nothing matches
+(including the case where every row is already archived), the
+endpoint returns `404` rather than a successful no-op.
 
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="deleteAllSearchHistory" method="delete" path="/search" -->
+<!-- UsageSnippet language="go" operationID="deleteSearchHistory" method="delete" path="/search" -->
 ```go
 package main
 
@@ -230,7 +228,7 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.DeleteAllHistory(ctx)
+    res, err := s.SemanticSearch.DeleteSearchHistory(ctx, nil, nil, nil, nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -242,14 +240,18 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                                                                                                                                           | Type                                                                                                                                                                                                                | Required                                                                                                                                                                                                            | Description                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                               | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                               | :heavy_check_mark:                                                                                                                                                                                                  | The context to use for the request.                                                                                                                                                                                 |
+| `search`                                                                                                                                                                                                            | **string*                                                                                                                                                                                                           | :heavy_minus_sign:                                                                                                                                                                                                  | Restrict the deletion to rows whose `title` or `messages.content`<br/>matches this case-insensitive substring. Special regex characters<br/>are escaped before the lookup; values over 1000 chars are<br/>rejected with `400`.<br/> |
+| `shared`                                                                                                                                                                                                            | [*operations.DeleteSearchHistoryShared](../../models/operations/deletesearchhistoryshared.md)                                                                                                                       | :heavy_minus_sign:                                                                                                                                                                                                  | Restrict the deletion to rows with this `isShared` value<br/>(`'true'` / `'false'`).<br/>                                                                                                                           |
+| `startDate`                                                                                                                                                                                                         | [*time.Time](https://pkg.go.dev/time#Time)                                                                                                                                                                          | :heavy_minus_sign:                                                                                                                                                                                                  | ISO 8601 lower bound for `createdAt`. Combined with `endDate`<br/>to scope which rows are deleted.<br/>                                                                                                             |
+| `endDate`                                                                                                                                                                                                           | [*time.Time](https://pkg.go.dev/time#Time)                                                                                                                                                                          | :heavy_minus_sign:                                                                                                                                                                                                  | ISO 8601 upper bound for `createdAt`.                                                                                                                                                                               |
+| `opts`                                                                                                                                                                                                              | [][operations.Option](../../models/operations/option.md)                                                                                                                                                            | :heavy_minus_sign:                                                                                                                                                                                                  | The options for this request.                                                                                                                                                                                       |
 
 ### Response
 
-**[*operations.DeleteAllSearchHistoryResponse](../../models/operations/deleteallsearchhistoryresponse.md), error**
+**[*operations.DeleteSearchHistoryResponse](../../models/operations/deletesearchhistoryresponse.md), error**
 
 ### Errors
 
@@ -257,9 +259,15 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## GetByID
+## GetSearchByID
 
-Retrieve a specific search result by its ID.
+Retrieve a previously persisted search by its id, scoped to the
+caller's org.
+
+The response body is always an **array** containing zero or one
+persisted search document. An unknown id returns an empty array
+with a `200` status — callers should check array length rather
+than relying on a `404`.
 
 
 ### Example Usage
@@ -285,11 +293,11 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.GetByID(ctx, "<value>")
+    res, err := s.SemanticSearch.GetSearchByID(ctx, "<value>")
     if err != nil {
         log.Fatal(err)
     }
-    if res.SearchResult != nil {
+    if res.PersistedSemanticSearchEnvelope != nil {
         // handle response
     }
 }
@@ -309,13 +317,24 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type                                 | Status Code                                | Content Type                               |
+| ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
+| apierrors.GetSearchByIDBadRequestError     | 400                                        | application/json                           |
+| apierrors.GetSearchByIDUnauthorizedError   | 401                                        | application/json                           |
+| apierrors.GetSearchByIDForbiddenError      | 403                                        | application/json                           |
+| apierrors.GetSearchByIDNotFoundError       | 404                                        | application/json                           |
+| apierrors.GetSearchByIDInternalServerError | 500                                        | application/json                           |
+| apierrors.APIError                         | 4XX, 5XX                                   | \*/\*                                      |
 
-## Delete
+## DeleteSearchByID
 
-Delete a specific search result by its ID.
+Permanently delete a single persisted search row, plus every
+citation row referenced by its `citationIds`. The caller must
+either own the row or have it shared with them.
+
+Scoped to the caller's org and limited to rows where
+`isDeleted: false` and `isArchived: false`; archived or
+already-deleted rows surface as `404`.
 
 
 ### Example Usage
@@ -329,6 +348,7 @@ import(
 	"os"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 )
 
@@ -341,7 +361,9 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.Delete(ctx, "<value>")
+    res, err := s.SemanticSearch.DeleteSearchByID(ctx, operations.DeleteSearchByIDRequest{
+        SearchID: "<value>",
+    })
     if err != nil {
         log.Fatal(err)
     }
@@ -353,11 +375,11 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `searchID`                                               | *string*                                                 | :heavy_check_mark:                                       | Unique search identifier                                 |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                | Type                                                                                     | Required                                                                                 | Description                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ctx`                                                                                    | [context.Context](https://pkg.go.dev/context#Context)                                    | :heavy_check_mark:                                                                       | The context to use for the request.                                                      |
+| `request`                                                                                | [operations.DeleteSearchByIDRequest](../../models/operations/deletesearchbyidrequest.md) | :heavy_check_mark:                                                                       | The request object to use for the request.                                               |
+| `opts`                                                                                   | [][operations.Option](../../models/operations/option.md)                                 | :heavy_minus_sign:                                                                       | The options for this request.                                                            |
 
 ### Response
 
@@ -369,125 +391,11 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## Share
+## ArchiveSearch
 
-Share a specific search result, making it accessible to other users.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="shareSearch" method="patch" path="/search/{searchId}/share" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.SemanticSearch.Share(ctx, "<value>", operations.ShareSearchRequestBody{})
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                              | Type                                                                                   | Required                                                                               | Description                                                                            |
-| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `ctx`                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                  | :heavy_check_mark:                                                                     | The context to use for the request.                                                    |
-| `searchID`                                                                             | *string*                                                                               | :heavy_check_mark:                                                                     | Unique search identifier                                                               |
-| `body`                                                                                 | [operations.ShareSearchRequestBody](../../models/operations/sharesearchrequestbody.md) | :heavy_check_mark:                                                                     | Request payload                                                                        |
-| `opts`                                                                                 | [][operations.Option](../../models/operations/option.md)                               | :heavy_minus_sign:                                                                     | The options for this request.                                                          |
-
-### Response
-
-**[*operations.ShareSearchResponse](../../models/operations/sharesearchresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## Unshare
-
-Revoke sharing for a specific search result, making it private again.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="unshareSearch" method="patch" path="/search/{searchId}/unshare" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.SemanticSearch.Unshare(ctx, "<value>", operations.UnshareSearchRequestBody{})
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                  | Type                                                                                       | Required                                                                                   | Description                                                                                |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `ctx`                                                                                      | [context.Context](https://pkg.go.dev/context#Context)                                      | :heavy_check_mark:                                                                         | The context to use for the request.                                                        |
-| `searchID`                                                                                 | *string*                                                                                   | :heavy_check_mark:                                                                         | Unique search identifier                                                                   |
-| `body`                                                                                     | [operations.UnshareSearchRequestBody](../../models/operations/unsharesearchrequestbody.md) | :heavy_check_mark:                                                                         | Request payload                                                                            |
-| `opts`                                                                                     | [][operations.Option](../../models/operations/option.md)                                   | :heavy_minus_sign:                                                                         | The options for this request.                                                              |
-
-### Response
-
-**[*operations.UnshareSearchResponse](../../models/operations/unsharesearchresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## Archive
-
-Archive a specific search result. Archived searches are hidden from the default search history view.
+Archive a specific search result. Archived searches are hidden
+from the default search history view but remain retrievable via
+the archive-aware listing endpoints.
 
 
 ### Example Usage
@@ -513,7 +421,7 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.Archive(ctx, "<value>")
+    res, err := s.SemanticSearch.ArchiveSearch(ctx, "<value>")
     if err != nil {
         log.Fatal(err)
     }
@@ -541,7 +449,7 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## Unarchive
+## UnarchiveSearch
 
 Restore a previously archived search result back to the active search history.
 
@@ -569,7 +477,7 @@ func main() {
         }),
     )
 
-    res, err := s.SemanticSearch.Unarchive(ctx, "<value>")
+    res, err := s.SemanticSearch.UnarchiveSearch(ctx, "<value>")
     if err != nil {
         log.Fatal(err)
     }

@@ -1,0 +1,9 @@
+# GetArchivedConversationsAvailablePagination
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `Page`                                                                                                | [*operations.GetArchivedConversationsPage](../../models/operations/getarchivedconversationspage.md)   | :heavy_minus_sign:                                                                                    | N/A                                                                                                   |
+| `Limit`                                                                                               | [*operations.GetArchivedConversationsLimit](../../models/operations/getarchivedconversationslimit.md) | :heavy_minus_sign:                                                                                    | N/A                                                                                                   |

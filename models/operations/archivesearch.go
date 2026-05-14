@@ -3,8 +3,11 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
 type ArchiveSearchRequest struct {
@@ -19,16 +22,128 @@ func (a *ArchiveSearchRequest) GetSearchID() string {
 	return a.SearchID
 }
 
-// ArchiveSearchResponseBody - Search archived successfully
-type ArchiveSearchResponseBody struct {
-	Message *string `json:"message,omitzero"`
+// ArchiveSearchStatus - Resulting status of the search after the operation.
+type ArchiveSearchStatus string
+
+const (
+	ArchiveSearchStatusArchived ArchiveSearchStatus = "archived"
+)
+
+func (e ArchiveSearchStatus) ToPointer() *ArchiveSearchStatus {
+	return &e
+}
+func (e *ArchiveSearchStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "archived":
+		*e = ArchiveSearchStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ArchiveSearchStatus: %v", v)
+	}
 }
 
-func (a *ArchiveSearchResponseBody) GetMessage() *string {
+type ArchiveSearchMeta struct {
+	// Server-assigned request identifier for tracing. Omitted when not available.
+	RequestID *string `json:"requestId,omitzero"`
+	// Server timestamp when the response was produced.
+	Timestamp time.Time `json:"timestamp"`
+	// Time taken to process the request, in milliseconds.
+	Duration int64 `json:"duration"`
+}
+
+func (a ArchiveSearchMeta) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *ArchiveSearchMeta) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *ArchiveSearchMeta) GetRequestID() *string {
 	if a == nil {
 		return nil
 	}
-	return a.Message
+	return a.RequestID
+}
+
+func (a *ArchiveSearchMeta) GetTimestamp() time.Time {
+	if a == nil {
+		return time.Time{}
+	}
+	return a.Timestamp
+}
+
+func (a *ArchiveSearchMeta) GetDuration() int64 {
+	if a == nil {
+		return 0
+	}
+	return a.Duration
+}
+
+// ArchiveSearchResponseBody - Search archived successfully
+type ArchiveSearchResponseBody struct {
+	// Unique identifier of the archived search.
+	ID string `json:"id"`
+	// Resulting status of the search after the operation.
+	Status ArchiveSearchStatus `json:"status"`
+	// User ID of the user who archived the search.
+	ArchivedBy string `json:"archivedBy"`
+	// Timestamp when the search was archived.
+	ArchivedAt time.Time         `json:"archivedAt"`
+	Meta       ArchiveSearchMeta `json:"meta"`
+}
+
+func (a ArchiveSearchResponseBody) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *ArchiveSearchResponseBody) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *ArchiveSearchResponseBody) GetID() string {
+	if a == nil {
+		return ""
+	}
+	return a.ID
+}
+
+func (a *ArchiveSearchResponseBody) GetStatus() ArchiveSearchStatus {
+	if a == nil {
+		return ArchiveSearchStatus("")
+	}
+	return a.Status
+}
+
+func (a *ArchiveSearchResponseBody) GetArchivedBy() string {
+	if a == nil {
+		return ""
+	}
+	return a.ArchivedBy
+}
+
+func (a *ArchiveSearchResponseBody) GetArchivedAt() time.Time {
+	if a == nil {
+		return time.Time{}
+	}
+	return a.ArchivedAt
+}
+
+func (a *ArchiveSearchResponseBody) GetMeta() ArchiveSearchMeta {
+	if a == nil {
+		return ArchiveSearchMeta{}
+	}
+	return a.Meta
 }
 
 type ArchiveSearchResponse struct {

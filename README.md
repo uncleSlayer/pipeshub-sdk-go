@@ -19,6 +19,8 @@ PipesHub is an enterprise-grade platform providing:
 ## Authentication
 Most endpoints require JWT Bearer token authentication. Some internal endpoints use scoped tokens for service-to-service communication.
 
+**OAuth 2.0 Bearer tokens** from `POST /oauth2/token` use the same `Authorization: Bearer` header. For **`client_credentials`**, machine tokens may encode `userId === client_id` in the JWT; the **Node API gateway** resolves the OAuth **app creator**, sets the authenticated user accordingly, and forwards **`x-oauth-user-id`** to Python services on proxied calls. Do not send **`x-oauth-user-id`** yourself—the gateway removes untrusted values on ingress. See the **OAuth Provider** tag for full behavior.
+
 ## Base URLs
 All endpoints use the `/api/v1` prefix unless otherwise noted.
 <!-- End Summary [summary] -->
@@ -70,8 +72,8 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -117,8 +119,8 @@ func main() {
 		}),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -158,7 +160,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.PasswordResetResponse != nil {
+	if res.DataStringResponse != nil {
 		// handle response
 	}
 }
@@ -172,435 +174,56 @@ func main() {
 <details open>
 <summary>Available methods</summary>
 
-### [AgentConversations](docs/sdks/agentconversations/README.md)
+### [AIModelsProviders](docs/sdks/aimodelsproviders/README.md)
 
-* [List](docs/sdks/agentconversations/README.md#list) - List agent conversations
-* [CreateConversation](docs/sdks/agentconversations/README.md#createconversation) - Create agent conversation
-* [Stream](docs/sdks/agentconversations/README.md#stream) - Create agent conversation with streaming
-* [Get](docs/sdks/agentconversations/README.md#get) - Get agent conversation
-* [Delete](docs/sdks/agentconversations/README.md#delete) - Delete agent conversation
-* [AddMessage](docs/sdks/agentconversations/README.md#addmessage) - Add message to agent conversation
-* [StreamMessage](docs/sdks/agentconversations/README.md#streammessage) - Add message with streaming
-* [RegenerateAnswer](docs/sdks/agentconversations/README.md#regenerateanswer) - Regenerate agent response
-
-### [Agents](docs/sdks/agents/README.md)
-
-* [List](docs/sdks/agents/README.md#list) - List agents
-* [Create](docs/sdks/agents/README.md#create) - Create agent
-* [ListTools](docs/sdks/agents/README.md#listtools) - List available tools
-* [Get](docs/sdks/agents/README.md#get) - Get agent
-* [Update](docs/sdks/agents/README.md#update) - Update agent
-* [Delete](docs/sdks/agents/README.md#delete) - Delete agent
-* [GetPermissions](docs/sdks/agents/README.md#getpermissions) - Get agent permissions
-* [UpdatePermissions](docs/sdks/agents/README.md#updatepermissions) - Update agent permissions
-* [Share](docs/sdks/agents/README.md#share) - Share agent
-* [Unshare](docs/sdks/agents/README.md#unshare) - Unshare an agent
-
-### [AgentTemplates](docs/sdks/agenttemplates/README.md)
-
-* [List](docs/sdks/agenttemplates/README.md#list) - List agent templates
-* [Create](docs/sdks/agenttemplates/README.md#create) - Create agent template
-* [Get](docs/sdks/agenttemplates/README.md#get) - Get agent template
-* [Update](docs/sdks/agenttemplates/README.md#update) - Update agent template
-* [Delete](docs/sdks/agenttemplates/README.md#delete) - Delete agent template
-
-### [AiModelsProviders](docs/sdks/aimodelsproviders/README.md)
-
-* [GetByType](docs/sdks/aimodelsproviders/README.md#getbytype) - Get models by type
-* [GetAvailableModels](docs/sdks/aimodelsproviders/README.md#getavailablemodels) - Get available models for selection
-* [Add](docs/sdks/aimodelsproviders/README.md#add) - Add new AI model provider
-* [Update](docs/sdks/aimodelsproviders/README.md#update) - Update AI model provider
-* [Delete](docs/sdks/aimodelsproviders/README.md#delete) - Delete AI model provider
-* [SetDefault](docs/sdks/aimodelsproviders/README.md#setdefault) - Set default AI model
-
-### [AuthConfig](docs/sdks/authconfig/README.md)
-
-* [SetGoogle](docs/sdks/authconfig/README.md#setgoogle) - Configure Google authentication
-
-### [AuthConfigurations](docs/sdks/authconfigurations/README.md)
-
-* [SetOAuth](docs/sdks/authconfigurations/README.md#setoauth) - Configure generic OAuth provider
-
-### [AuthenticationConfiguration](docs/sdks/authenticationconfiguration/README.md)
-
-* [SetAzureAdAuthConfig](docs/sdks/authenticationconfiguration/README.md#setazureadauthconfig) - Configure Azure AD authentication
-* [GetAzureAd](docs/sdks/authenticationconfiguration/README.md#getazuread) - Get Azure AD configuration
-* [SetMicrosoftAuth](docs/sdks/authenticationconfiguration/README.md#setmicrosoftauth) - Configure Microsoft authentication
-* [GetMicrosoft](docs/sdks/authenticationconfiguration/README.md#getmicrosoft) - Get Microsoft authentication configuration
-* [GetGoogleAuthConfig](docs/sdks/authenticationconfiguration/README.md#getgoogleauthconfig) - Get Google authentication configuration
-* [SetSsoAuthConfig](docs/sdks/authenticationconfiguration/README.md#setssoauthconfig) - Configure SAML SSO authentication
-* [GetSSO](docs/sdks/authenticationconfiguration/README.md#getsso) - Get SAML SSO configuration
-* [GetGenericOAuth](docs/sdks/authenticationconfiguration/README.md#getgenericoauth) - Get generic OAuth configuration
-
-### [ConfigurationManager](docs/sdks/configurationmanager/README.md)
-
-* [GetSlackBotConfigs](docs/sdks/configurationmanager/README.md#getslackbotconfigs) - Get Slack bot configurations
-* [CreateSlackBotConfig](docs/sdks/configurationmanager/README.md#createslackbotconfig) - Create Slack bot configuration
-* [UpdateSlackBotConfig](docs/sdks/configurationmanager/README.md#updateslackbotconfig) - Update Slack bot configuration
-* [DeleteSlackBotConfig](docs/sdks/configurationmanager/README.md#deleteslackbotconfig) - Delete Slack bot configuration
-* [SetMetricsCollectionPushInterval](docs/sdks/configurationmanager/README.md#setmetricscollectionpushinterval) - Set metrics push interval
-* [SetMetricsServerURL](docs/sdks/configurationmanager/README.md#setmetricsserverurl) - Set metrics remote server URL
-* [GetAIModels](docs/sdks/configurationmanager/README.md#getaimodels) - Get AI models configuration
-* [CreateAIModelsConfig](docs/sdks/configurationmanager/README.md#createaimodelsconfig) - Create AI models configuration
-* [GetAIModelsProviders](docs/sdks/configurationmanager/README.md#getaimodelsproviders) - Get AI model providers
-
-### [Connector](docs/sdks/connector/README.md)
-
-* [ReindexRecord](docs/sdks/connector/README.md#reindexrecord) - Reindex single record
-* [ReindexGroup](docs/sdks/connector/README.md#reindexgroup) - Reindex record group
-* [Resync](docs/sdks/connector/README.md#resync) - Resync connector
-
-### [ConnectorConfiguration](docs/sdks/connectorconfiguration/README.md)
-
-* [Get](docs/sdks/connectorconfiguration/README.md#get) - Get connector configuration
-* [Update](docs/sdks/connectorconfiguration/README.md#update) - Update connector configuration
-* [UpdateAuth](docs/sdks/connectorconfiguration/README.md#updateauth) - Update authentication configuration
-* [UpdateFiltersSync](docs/sdks/connectorconfiguration/README.md#updatefilterssync) - Update filters and sync configuration
-
-### [ConnectorControl](docs/sdks/connectorcontrol/README.md)
-
-* [Toggle](docs/sdks/connectorcontrol/README.md#toggle) - Toggle connector sync or agent
-
-### [ConnectorFilters](docs/sdks/connectorfilters/README.md)
-
-* [Get](docs/sdks/connectorfilters/README.md#get) - Get filter options
-* [Save](docs/sdks/connectorfilters/README.md#save) - Save filter selections
-* [GetFilterOptions](docs/sdks/connectorfilters/README.md#getfilteroptions) - Get dynamic filter options
-
-### [ConnectorInstances](docs/sdks/connectorinstances/README.md)
-
-* [List](docs/sdks/connectorinstances/README.md#list) - List connector instances
-* [Create](docs/sdks/connectorinstances/README.md#create) - Create connector instance
-* [ListActive](docs/sdks/connectorinstances/README.md#listactive) - List active connector instances
-* [ListInactive](docs/sdks/connectorinstances/README.md#listinactive) - List inactive connector instances
-* [ListConfigured](docs/sdks/connectorinstances/README.md#listconfigured) - List configured connector instances
-* [ListActiveAgents](docs/sdks/connectorinstances/README.md#listactiveagents) - List active agent connectors
-* [Get](docs/sdks/connectorinstances/README.md#get) - Get connector instance
-* [Delete](docs/sdks/connectorinstances/README.md#delete) - Delete connector instance
-* [UpdateName](docs/sdks/connectorinstances/README.md#updatename) - Update connector instance name
-
-### [ConnectorOAuth](docs/sdks/connectoroauth/README.md)
-
-* [Authorize](docs/sdks/connectoroauth/README.md#authorize) - Get OAuth authorization URL
-* [HandleCallback](docs/sdks/connectoroauth/README.md#handlecallback) - OAuth callback handler
-* [~~ExchangeLegacyToken~~](docs/sdks/connectoroauth/README.md#exchangelegacytoken) - Exchange Google authorization code for tokens :warning: **Deprecated**
-
-### [ConnectorRegistry](docs/sdks/connectorregistry/README.md)
-
-* [List](docs/sdks/connectorregistry/README.md#list) - List available connector types
-* [GetSchemaForType](docs/sdks/connectorregistry/README.md#getschemafortype) - Get connector configuration schema
-
-### [Connectors](docs/sdks/connectors/README.md)
-
-* [GetStats](docs/sdks/connectors/README.md#getstats) - Get connector statistics
+* [GetAvailableModelsByType](docs/sdks/aimodelsproviders/README.md#getavailablemodelsbytype) - Get available models by type
 
 ### [Conversations](docs/sdks/conversations/README.md)
 
-* [Create](docs/sdks/conversations/README.md#create) - Create a new AI conversation
-* [Stream](docs/sdks/conversations/README.md#stream) - Create conversation with streaming response
-* [List](docs/sdks/conversations/README.md#list) - List all conversations
-* [ListArchives](docs/sdks/conversations/README.md#listarchives) - List archived conversations
-* [Get](docs/sdks/conversations/README.md#get) - Get conversation by ID
-* [Delete](docs/sdks/conversations/README.md#delete) - Delete conversation
-* [AddMessage](docs/sdks/conversations/README.md#addmessage) - Add message to conversation
-* [AddMessageStream](docs/sdks/conversations/README.md#addmessagestream) - Add message with streaming response
-* [Share](docs/sdks/conversations/README.md#share) - Share conversation with users
-* [UpdateTitle](docs/sdks/conversations/README.md#updatetitle) - Update conversation title
-* [Archive](docs/sdks/conversations/README.md#archive) - Archive conversation
-* [Unarchive](docs/sdks/conversations/README.md#unarchive) - Unarchive conversation
-* [Regenerate](docs/sdks/conversations/README.md#regenerate) - Regenerate AI response
-* [SubmitFeedback](docs/sdks/conversations/README.md#submitfeedback) - Submit feedback on AI response
-* [Unshare](docs/sdks/conversations/README.md#unshare) - Unshare a conversation
+* [StreamChat](docs/sdks/conversations/README.md#streamchat) - Create conversation with streaming response
+* [GetAllConversations](docs/sdks/conversations/README.md#getallconversations) - List all conversations
+* [GetArchivedConversations](docs/sdks/conversations/README.md#getarchivedconversations) - List archived conversations
+* [SearchArchivedConversations](docs/sdks/conversations/README.md#searcharchivedconversations) - Search archived conversations
+* [GetConversationByID](docs/sdks/conversations/README.md#getconversationbyid) - Get conversation by ID
+* [DeleteConversationByID](docs/sdks/conversations/README.md#deleteconversationbyid) - Delete conversation
+* [AddMessageStream](docs/sdks/conversations/README.md#addmessagestream) - Add message to a conversation with streaming response
+* [UpdateConversationTitle](docs/sdks/conversations/README.md#updateconversationtitle) - Update conversation title
+* [ArchiveConversation](docs/sdks/conversations/README.md#archiveconversation) - Archive conversation
+* [UnarchiveConversation](docs/sdks/conversations/README.md#unarchiveconversation) - Unarchive conversation
+* [RegenerateAnswer](docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
+* [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
 
-### [CrawlingJobs](docs/sdks/crawlingjobs/README.md)
+### [KnowledgeHub](docs/sdks/knowledgehub/README.md)
 
-* [Schedule](docs/sdks/crawlingjobs/README.md#schedule) - Schedule a crawling job
-* [GetStatus](docs/sdks/crawlingjobs/README.md#getstatus) - Get crawling job status
-* [Remove](docs/sdks/crawlingjobs/README.md#remove) - Remove a crawling job
-* [ListAllStatuses](docs/sdks/crawlingjobs/README.md#listallstatuses) - Get all crawling job statuses
-* [RemoveAll](docs/sdks/crawlingjobs/README.md#removeall) - Remove all crawling jobs
-* [Pause](docs/sdks/crawlingjobs/README.md#pause) - Pause a crawling job
-* [Resume](docs/sdks/crawlingjobs/README.md#resume) - Resume a crawling job
-* [GetQueueStats](docs/sdks/crawlingjobs/README.md#getqueuestats) - Get queue statistics
-
-### [DocumentManagement](docs/sdks/documentmanagement/README.md)
-
-* [Download](docs/sdks/documentmanagement/README.md#download) - Download document
-
-### [Folders](docs/sdks/folders/README.md)
-
-* [CreateRoot](docs/sdks/folders/README.md#createroot) - Create root folder
-* [GetContents](docs/sdks/folders/README.md#getcontents) - Get folder contents
-* [Update](docs/sdks/folders/README.md#update) - Update folder
-* [Delete](docs/sdks/folders/README.md#delete) - Delete folder
-* [GetChildren](docs/sdks/folders/README.md#getchildren) - Get folder children (alias for folder contents)
-* [Create](docs/sdks/folders/README.md#create) - Create subfolder
-
-### [KnowledgeBases](docs/sdks/knowledgebases/README.md)
-
-* [Create](docs/sdks/knowledgebases/README.md#create) - Create a new knowledge base
-* [List](docs/sdks/knowledgebases/README.md#list) - List all knowledge bases
-* [Get](docs/sdks/knowledgebases/README.md#get) - Get knowledge base by ID
-* [Update](docs/sdks/knowledgebases/README.md#update) - Update knowledge base
-* [Delete](docs/sdks/knowledgebases/README.md#delete) - Delete knowledge base
-* [ReindexFailedRecords](docs/sdks/knowledgebases/README.md#reindexfailedrecords) - Reindex failed records for connector
-* [MoveRecord](docs/sdks/knowledgebases/README.md#moverecord) - Move record to another location
-* [GetRootNodes](docs/sdks/knowledgebases/README.md#getrootnodes) - Get knowledge hub root nodes
-* [GetChildNodes](docs/sdks/knowledgebases/README.md#getchildnodes) - Get knowledge hub child nodes
-
-### [Mcp](docs/sdks/mcp/README.md)
-
-* [HandleRequest](docs/sdks/mcp/README.md#handlerequest) - Handle MCP JSON-RPC request
-* [Stream](docs/sdks/mcp/README.md#stream) - MCP SSE streaming endpoint
-
-### [MetricsCollection](docs/sdks/metricscollection/README.md)
-
-* [Get](docs/sdks/metricscollection/README.md#get) - Get metrics collection configuration
-* [Toggle](docs/sdks/metricscollection/README.md#toggle) - Enable or disable metrics collection
-
-### [Oauth](docs/sdks/oauth/README.md)
-
-* [ExchangeCode](docs/sdks/oauth/README.md#exchangecode) - Exchange OAuth authorization code for tokens
-
-### [OauthApps](docs/sdks/oauthapps/README.md)
-
-* [List](docs/sdks/oauthapps/README.md#list) - List OAuth apps
-* [Create](docs/sdks/oauthapps/README.md#create) - Create OAuth app
-* [ListScopes](docs/sdks/oauthapps/README.md#listscopes) - List available scopes
-* [Get](docs/sdks/oauthapps/README.md#get) - Get OAuth app details
-* [Update](docs/sdks/oauthapps/README.md#update) - Update OAuth app
-* [Delete](docs/sdks/oauthapps/README.md#delete) - Delete OAuth app
-* [RegenerateSecret](docs/sdks/oauthapps/README.md#regeneratesecret) - Regenerate client secret
-* [Suspend](docs/sdks/oauthapps/README.md#suspend) - Suspend OAuth app
-* [Activate](docs/sdks/oauthapps/README.md#activate) - Activate suspended OAuth app
-* [ListTokens](docs/sdks/oauthapps/README.md#listtokens) - List app tokens
-* [RevokeAllTokens](docs/sdks/oauthapps/README.md#revokealltokens) - Revoke all app tokens
-
-### [OauthConfigs](docs/sdks/oauthconfigs/README.md)
-
-* [ListAll](docs/sdks/oauthconfigs/README.md#listall) - List OAuth configurations
-* [UpdateByID](docs/sdks/oauthconfigs/README.md#updatebyid) - Update OAuth configuration
-
-### [OauthConfiguration](docs/sdks/oauthconfiguration/README.md)
-
-* [ListToolsetConfigs](docs/sdks/oauthconfiguration/README.md#listtoolsetconfigs) - List OAuth configs by toolset type
-* [DeleteConfig](docs/sdks/oauthconfiguration/README.md#deleteconfig) - Delete OAuth config
-* [List](docs/sdks/oauthconfiguration/README.md#list) - List OAuth-capable connector types
-* [GetConnectorTypeDetails](docs/sdks/oauthconfiguration/README.md#getconnectortypedetails) - Get OAuth connector type details
-* [ListConfigsByType](docs/sdks/oauthconfiguration/README.md#listconfigsbytype) - List OAuth configs for connector type
-* [Create](docs/sdks/oauthconfiguration/README.md#create) - Create OAuth configuration
-* [Get](docs/sdks/oauthconfiguration/README.md#get) - Get OAuth configuration
-
-### [OauthConfigurations](docs/sdks/oauthconfigurations/README.md)
-
-* [Update](docs/sdks/oauthconfigurations/README.md#update) - Update OAuth config
-* [Delete](docs/sdks/oauthconfigurations/README.md#delete) - Delete OAuth configuration
-
-### [OauthProvider](docs/sdks/oauthprovider/README.md)
-
-* [Authorize](docs/sdks/oauthprovider/README.md#authorize) - Initiate OAuth authorization flow
-* [AuthorizeConsent](docs/sdks/oauthprovider/README.md#authorizeconsent) - Submit authorization consent
-* [ExchangeToken](docs/sdks/oauthprovider/README.md#exchangetoken) - Exchange authorization code for tokens
-* [RevokeToken](docs/sdks/oauthprovider/README.md#revoketoken) - Revoke an access or refresh token
-* [IntrospectToken](docs/sdks/oauthprovider/README.md#introspecttoken) - Introspect a token
-
-### [OpenIDConnect](docs/sdks/openidconnect/README.md)
-
-* [UserInfo](docs/sdks/openidconnect/README.md#userinfo) - Get authenticated user information
-* [OauthAuthorizationServerMetadata](docs/sdks/openidconnect/README.md#oauthauthorizationservermetadata) - OAuth 2.0 Authorization Server Metadata
-* [Jwks](docs/sdks/openidconnect/README.md#jwks) - JSON Web Key Set
-* [GetProtectedResourceMetadata](docs/sdks/openidconnect/README.md#getprotectedresourcemetadata) - OAuth Protected Resource Metadata
-* [GetConfiguration](docs/sdks/openidconnect/README.md#getconfiguration) - OpenID Connect Discovery
+* [GetKnowledgeHubRootNodes](docs/sdks/knowledgehub/README.md#getknowledgehubrootnodes) - Get knowledge hub root nodes
+* [GetKnowledgeHubChildNodes](docs/sdks/knowledgehub/README.md#getknowledgehubchildnodes) - Get knowledge hub child nodes
 
 ### [OrganizationAuthConfig](docs/sdks/organizationauthconfig/README.md)
 
 * [GetAuthMethods](docs/sdks/organizationauthconfig/README.md#getauthmethods) - Get organization authentication methods
 * [UpdateAuthMethod](docs/sdks/organizationauthconfig/README.md#updateauthmethod) - Update organization authentication methods
-* [SetUp](docs/sdks/organizationauthconfig/README.md#setup) - Set up auth configuration
+* [SetUpAuthConfig](docs/sdks/organizationauthconfig/README.md#setupauthconfig) - Set up auth configuration
 
 ### [Organizations](docs/sdks/organizations/README.md)
 
-* [CheckExists](docs/sdks/organizations/README.md#checkexists) - Check if organization exists
-* [Create](docs/sdks/organizations/README.md#create) - Create organization
-* [GetCurrent](docs/sdks/organizations/README.md#getcurrent) - Get current organization
-* [Update](docs/sdks/organizations/README.md#update) - Update organization
-* [Delete](docs/sdks/organizations/README.md#delete) - Delete organization
-* [UploadLogo](docs/sdks/organizations/README.md#uploadlogo) - Upload organization logo
-* [GetLogo](docs/sdks/organizations/README.md#getlogo) - Get organization logo
-* [DeleteLogo](docs/sdks/organizations/README.md#deletelogo) - Delete organization logo
-* [GetOnboardingStatus](docs/sdks/organizations/README.md#getonboardingstatus) - Get onboarding status
-* [UpdateOnboardingStatus](docs/sdks/organizations/README.md#updateonboardingstatus) - Update onboarding status
-
-### [Permissions](docs/sdks/permissions/README.md)
-
-* [GrantKBAccess](docs/sdks/permissions/README.md#grantkbaccess) - Grant permissions
-* [List](docs/sdks/permissions/README.md#list) - List permissions
-* [Update](docs/sdks/permissions/README.md#update) - Update permissions
-* [DeleteFromKB](docs/sdks/permissions/README.md#deletefromkb) - Remove permissions
-
-### [PlatformSettings](docs/sdks/platformsettings/README.md)
-
-* [Update](docs/sdks/platformsettings/README.md#update) - Update platform settings
-* [Get](docs/sdks/platformsettings/README.md#get) - Get platform settings
-* [ListFeatureFlags](docs/sdks/platformsettings/README.md#listfeatureflags) - Get available feature flags
-* [SetCustomSystemPrompt](docs/sdks/platformsettings/README.md#setcustomsystemprompt) - Update custom system prompt
-* [GetCustomSystemPrompt](docs/sdks/platformsettings/README.md#getcustomsystemprompt) - Get custom system prompt
-
-### [PublicUrls](docs/sdks/publicurls1/README.md)
-
-* [SetFrontend](docs/sdks/publicurls1/README.md#setfrontend) - Set frontend public URL
-* [Set](docs/sdks/publicurls1/README.md#set) - Set connector public URL
-* [GetConnector](docs/sdks/publicurls1/README.md#getconnector) - Get connector public URL
-
-### [PublicURLs](docs/sdks/publicurls2/README.md)
-
-* [GetFrontend](docs/sdks/publicurls2/README.md#getfrontend) - Get frontend public URL
-
-### [Records](docs/sdks/records/README.md)
-
-* [GetAll](docs/sdks/records/README.md#getall) - Get all records across knowledge bases
-* [GetByKB](docs/sdks/records/README.md#getbykb) - Get records for a knowledge base
-* [GetChildren](docs/sdks/records/README.md#getchildren) - Get KB children (alias for records)
-* [GetByID](docs/sdks/records/README.md#getbyid) - Get record by ID
-* [Update](docs/sdks/records/README.md#update) - Update record
-* [Delete](docs/sdks/records/README.md#delete) - Delete record
-* [StreamContent](docs/sdks/records/README.md#streamcontent) - Stream record content
-
-### [Saml](docs/sdks/saml/README.md)
-
-* [SignIn](docs/sdks/saml/README.md#signin) - Initiate SAML sign-in flow
-* [SignInCallback](docs/sdks/saml/README.md#signincallback) - SAML sign-in callback
+* [GetCurrentOrganization](docs/sdks/organizations/README.md#getcurrentorganization) - Get current organization
 
 ### [SemanticSearch](docs/sdks/semanticsearch/README.md)
 
-* [Execute](docs/sdks/semanticsearch/README.md#execute) - Perform semantic search
-* [GetHistory](docs/sdks/semanticsearch/README.md#gethistory) - Get search history
-* [DeleteAllHistory](docs/sdks/semanticsearch/README.md#deleteallhistory) - Clear all search history
-* [GetByID](docs/sdks/semanticsearch/README.md#getbyid) - Get search by ID
-* [Delete](docs/sdks/semanticsearch/README.md#delete) - Delete search by ID
-* [Share](docs/sdks/semanticsearch/README.md#share) - Share a search
-* [Unshare](docs/sdks/semanticsearch/README.md#unshare) - Unshare a search
-* [Archive](docs/sdks/semanticsearch/README.md#archive) - Archive a search
-* [Unarchive](docs/sdks/semanticsearch/README.md#unarchive) - Unarchive a search
-
-### [SmtpConfiguration](docs/sdks/smtpconfiguration/README.md)
-
-* [CreateOrUpdate](docs/sdks/smtpconfiguration/README.md#createorupdate) - Create or update SMTP configuration
-* [Get](docs/sdks/smtpconfiguration/README.md#get) - Get SMTP configuration
-
-### [StorageConfiguration](docs/sdks/storageconfiguration/README.md)
-
-* [Get](docs/sdks/storageconfiguration/README.md#get) - Get current storage configuration
-
-### [Teams](docs/sdks/teams/README.md)
-
-* [Create](docs/sdks/teams/README.md#create) - Create a team
-* [List](docs/sdks/teams/README.md#list) - List teams
-* [GetByID](docs/sdks/teams/README.md#getbyid) - Get team by ID
-* [Update](docs/sdks/teams/README.md#update) - Update team
-* [Delete](docs/sdks/teams/README.md#delete) - Delete team
-* [ListUserTeams](docs/sdks/teams/README.md#listuserteams) - Get current user's teams
-* [GetUsers](docs/sdks/teams/README.md#getusers) - Get users in team
-* [AddUsers](docs/sdks/teams/README.md#addusers) - Add users to team
-* [Remove](docs/sdks/teams/README.md#remove) - Remove user from team
-* [UpdateUserPermissions](docs/sdks/teams/README.md#updateuserpermissions) - Update team users permissions
-* [GetUserCreated](docs/sdks/teams/README.md#getusercreated) - Get user created teams
-
-### [ToolsetConfiguration](docs/sdks/toolsetconfiguration/README.md)
-
-* [GetConfig](docs/sdks/toolsetconfiguration/README.md#getconfig) - Get toolset configuration
-* [Update](docs/sdks/toolsetconfiguration/README.md#update) - Update toolset configuration
-* [Delete](docs/sdks/toolsetconfiguration/README.md#delete) - Delete toolset configuration
-
-### [~~ToolsetConfigurations~~](docs/sdks/toolsetconfigurations/README.md)
-
-* [~~Save~~](docs/sdks/toolsetconfigurations/README.md#save) - Save toolset configuration :warning: **Deprecated**
-
-### [ToolsetInstances](docs/sdks/toolsetinstances/README.md)
-
-* [ListConfigured](docs/sdks/toolsetinstances/README.md#listconfigured) - List configured toolsets
-* [CheckStatus](docs/sdks/toolsetinstances/README.md#checkstatus) - Check toolset status
-* [ListMine](docs/sdks/toolsetinstances/README.md#listmine) - List my toolsets with auth status
-* [List](docs/sdks/toolsetinstances/README.md#list) - List toolset instances
-* [Create](docs/sdks/toolsetinstances/README.md#create) - Create toolset instance
-* [Get](docs/sdks/toolsetinstances/README.md#get) - Get toolset instance
-* [Update](docs/sdks/toolsetinstances/README.md#update) - Update toolset instance
-* [Delete](docs/sdks/toolsetinstances/README.md#delete) - Delete toolset instance
-* [Authenticate](docs/sdks/toolsetinstances/README.md#authenticate) - Authenticate toolset instance
-* [DeleteCredentials](docs/sdks/toolsetinstances/README.md#deletecredentials) - Remove toolset credentials
-* [Reauthenticate](docs/sdks/toolsetinstances/README.md#reauthenticate) - Mark instance for reauthentication
-* [GetStatus](docs/sdks/toolsetinstances/README.md#getstatus) - Get instance authentication status
-
-### [ToolsetOAuth](docs/sdks/toolsetoauth/README.md)
-
-* [Authorize](docs/sdks/toolsetoauth/README.md#authorize) - Get OAuth authorization URL
-* [Callback](docs/sdks/toolsetoauth/README.md#callback) - Handle OAuth callback
-* [GetAuthURL](docs/sdks/toolsetoauth/README.md#getauthurl) - Get OAuth authorization URL for instance
-
-### [ToolsetRegistry](docs/sdks/toolsetregistry/README.md)
-
-* [List](docs/sdks/toolsetregistry/README.md#list) - List available toolsets
-* [GetSchema](docs/sdks/toolsetregistry/README.md#getschema) - Get toolset schema
-
-### [Toolsets](docs/sdks/toolsets/README.md)
-
-* [CreateInstance](docs/sdks/toolsets/README.md#createinstance) - Create toolset instance
-* [ReauthenticateByID](docs/sdks/toolsets/README.md#reauthenticatebyid) - Reauthenticate toolset
-
-### [Upload](docs/sdks/upload/README.md)
-
-* [Files](docs/sdks/upload/README.md#files) - Upload files to knowledge base
-* [ToFolder](docs/sdks/upload/README.md#tofolder) - Upload files to folder
-* [GetLimits](docs/sdks/upload/README.md#getlimits) - Get upload limits
+* [Search](docs/sdks/semanticsearch/README.md#search) - Perform semantic search
+* [SearchHistory](docs/sdks/semanticsearch/README.md#searchhistory) - Get search history
+* [DeleteSearchHistory](docs/sdks/semanticsearch/README.md#deletesearchhistory) - Clear all search history
+* [GetSearchByID](docs/sdks/semanticsearch/README.md#getsearchbyid) - Get search by ID
+* [DeleteSearchByID](docs/sdks/semanticsearch/README.md#deletesearchbyid) - Delete search by ID
+* [ArchiveSearch](docs/sdks/semanticsearch/README.md#archivesearch) - Archive a search
+* [UnarchiveSearch](docs/sdks/semanticsearch/README.md#unarchivesearch) - Unarchive a search
 
 ### [UserAccount](docs/sdks/useraccount/README.md)
 
 * [InitAuth](docs/sdks/useraccount/README.md#initauth) - Initialize authentication session
 * [Authenticate](docs/sdks/useraccount/README.md#authenticate) - Authenticate user with credentials
-* [GenerateLoginOtp](docs/sdks/useraccount/README.md#generateloginotp) - Generate and send OTP for login
-* [RequestPasswordReset](docs/sdks/useraccount/README.md#requestpasswordreset) - Request password reset email
 * [ResetPasswordWithToken](docs/sdks/useraccount/README.md#resetpasswordwithtoken) - Reset password with email token
-* [RefreshToken](docs/sdks/useraccount/README.md#refreshtoken) - Refresh access token
-* [Logout](docs/sdks/useraccount/README.md#logout) - Logout current session
 * [ResetPassword](docs/sdks/useraccount/README.md#resetpassword) - Reset password
-
-### [UserGroups](docs/sdks/usergroups/README.md)
-
-* [Create](docs/sdks/usergroups/README.md#create) - Create user group
-* [GetAll](docs/sdks/usergroups/README.md#getall) - Get all user groups
-* [GetByID](docs/sdks/usergroups/README.md#getbyid) - Get user group by ID
-* [Update](docs/sdks/usergroups/README.md#update) - Update user group
-* [Delete](docs/sdks/usergroups/README.md#delete) - Delete user group
-* [AddUsers](docs/sdks/usergroups/README.md#addusers) - Add users to group
-* [RemoveUsers](docs/sdks/usergroups/README.md#removeusers) - Remove users from group
-* [GetUserGroups](docs/sdks/usergroups/README.md#getusergroups) - Get groups for a user
-* [GetInGroup](docs/sdks/usergroups/README.md#getingroup) - Get users in group
-* [GetStatistics](docs/sdks/usergroups/README.md#getstatistics) - Get group statistics
-
-### [Users](docs/sdks/users/README.md)
-
-* [GetAll](docs/sdks/users/README.md#getall) - Get all users
-* [Create](docs/sdks/users/README.md#create) - Create a new user
-* [Get](docs/sdks/users/README.md#get) - Get user by ID
-* [Update](docs/sdks/users/README.md#update) - Update user
-* [Delete](docs/sdks/users/README.md#delete) - Delete user
-* [GetEmail](docs/sdks/users/README.md#getemail) - Get user email by ID
-* [UpdateEmail](docs/sdks/users/README.md#updateemail) - Update user email
-* [UploadDisplayPicture](docs/sdks/users/README.md#uploaddisplaypicture) - Upload display picture
-* [GetDisplayPicture](docs/sdks/users/README.md#getdisplaypicture) - Get display picture
-* [RemoveDisplayPicture](docs/sdks/users/README.md#removedisplaypicture) - Remove display picture
-* [BulkInvite](docs/sdks/users/README.md#bulkinvite) - Bulk invite users
-* [ResendInvite](docs/sdks/users/README.md#resendinvite) - Resend user invite
-* [ListGraph](docs/sdks/users/README.md#listgraph) - List users (paginated with graph data)
-* [Unblock](docs/sdks/users/README.md#unblock) - Unblock a user in organization
-* [GetAllWithGroups](docs/sdks/users/README.md#getallwithgroups) - Get all users with groups
-* [GetByIds](docs/sdks/users/README.md#getbyids) - Get users by IDs
-* [UpdateFullName](docs/sdks/users/README.md#updatefullname) - Update user full name
-* [UpdateFirstName](docs/sdks/users/README.md#updatefirstname) - Update user first name
-* [UpdateLastName](docs/sdks/users/README.md#updatelastname) - Update user last name
-* [UpdateDesignation](docs/sdks/users/README.md#updatedesignation) - Update user designation
-* [CheckAdmin](docs/sdks/users/README.md#checkadmin) - Check if user is admin
-* [ListTeams](docs/sdks/users/README.md#listteams) - Get user teams
 
 </details>
 <!-- End Available Resources and Operations [operations] -->
@@ -621,6 +244,7 @@ import (
 	"context"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
 	"log"
 	"os"
 )
@@ -634,24 +258,31 @@ func main() {
 		}),
 	)
 
-	res, err := s.Conversations.Stream(ctx, components.CreateConversationRequest{
+	res, err := s.Conversations.StreamChat(ctx, components.CreateConversationRequest{
 		Query: "What are the key findings from our Q4 financial report?",
 		RecordIds: []string{
 			"507f1f77bcf86cd799439011",
 			"507f1f77bcf86cd799439012",
 		},
-		ModelKey:  pipeshub.Pointer("gpt-4-turbo"),
-		ModelName: pipeshub.Pointer("GPT-4 Turbo"),
-		ChatMode:  pipeshub.Pointer("balanced"),
+		ModelKey:          pipeshub.Pointer("gpt-4-turbo"),
+		ModelName:         pipeshub.Pointer("GPT-4 Turbo"),
+		ModelFriendlyName: pipeshub.Pointer("GPT-4 Turbo"),
+		ChatMode:          pipeshub.Pointer("balanced"),
+		Timezone:          pipeshub.Pointer("America/New_York"),
+		CurrentTime:       types.MustNewTimeFromString("2026-04-12T16:00:00+05:30"),
+		Tools: []string{
+			"jira.create_issue",
+			"confluence.search_content",
+		},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.SSEEvent != nil {
-		defer res.SSEEvent.Close()
+	if res.AssistantStreamSSEEvent != nil {
+		defer res.AssistantStreamSSEEvent.Close()
 
-		for res.SSEEvent.Next() {
-			event := res.SSEEvent.Value()
+		for res.AssistantStreamSSEEvent.Next() {
+			event := res.AssistantStreamSSEEvent.Value()
 			log.Print(event)
 			// Handle the event
 		}
@@ -686,8 +317,8 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	}, operations.WithRetries(
 		retry.Config{
 			Strategy: "backoff",
@@ -738,8 +369,8 @@ func main() {
 			}),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -761,10 +392,11 @@ By Default, an API error will return `apierrors.APIError`. When custom error res
 
 For example, the `InitAuth` function may return the following errors:
 
-| Error Type          | Status Code   | Content Type     |
-| ------------------- | ------------- | ---------------- |
-| apierrors.AuthError | 400, 403, 404 | application/json |
-| apierrors.APIError  | 4XX, 5XX      | \*/\*            |
+| Error Type              | Status Code | Content Type     |
+| ----------------------- | ----------- | ---------------- |
+| apierrors.ErrorResponse | 400         | application/json |
+| apierrors.ErrorResponse | 500         | application/json |
+| apierrors.APIError      | 4XX, 5XX    | \*/\*            |
 
 ### Example
 
@@ -785,12 +417,18 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 
-		var e *apierrors.AuthError
+		var e *apierrors.ErrorResponse
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.ErrorResponse
 		if errors.As(err, &e) {
 			// handle error
 			log.Fatal(e.Error())
@@ -845,8 +483,8 @@ func main() {
 		pipeshub.WithInstanceURL("https://app.pipeshub.com"),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -878,42 +516,13 @@ func main() {
 		pipeshub.WithServerURL("https://https://app.pipeshub.com"),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 	if res.InitAuthResponse != nil {
-		// handle response
-	}
-}
-
-```
-
-### Override Server URL Per-Operation
-
-The server URL can also be overridden on a per-operation basis, provided a server list was specified for the operation. For example:
-```go
-package main
-
-import (
-	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-	ctx := context.Background()
-
-	s := pipeshub.New()
-
-	res, err := s.OpenIDConnect.OauthAuthorizationServerMetadata(ctx, operations.WithServerURL(""))
-	if err != nil {
-		log.Fatal(err)
-	}
-	if res.OpenIDConfiguration != nil {
 		// handle response
 	}
 }

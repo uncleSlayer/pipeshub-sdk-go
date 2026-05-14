@@ -1,0 +1,10 @@
+# ArchiveSearchMeta
+
+
+## Fields
+
+| Field                                                                       | Type                                                                        | Required                                                                    | Description                                                                 | Example                                                                     |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `RequestID`                                                                 | **string*                                                                   | :heavy_minus_sign:                                                          | Server-assigned request identifier for tracing. Omitted when not available. | req_8f3a1b2c                                                                |
+| `Timestamp`                                                                 | [time.Time](https://pkg.go.dev/time#Time)                                   | :heavy_check_mark:                                                          | Server timestamp when the response was produced.                            | 2026-05-10 12:34:56.789 +0000 UTC                                           |
+| `Duration`                                                                  | *int64*                                                                     | :heavy_check_mark:                                                          | Time taken to process the request, in milliseconds.                         | 42                                                                          |

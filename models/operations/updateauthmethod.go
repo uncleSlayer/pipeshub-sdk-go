@@ -7,22 +7,23 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// UpdateAuthMethodResponseBody - Authentication methods updated successfully
-type UpdateAuthMethodResponseBody struct {
-	Message *string `json:"message,omitzero"`
+// UpdateAuthMethodRequest - Request payload
+type UpdateAuthMethodRequest struct {
+	// Authentication steps to set for the organization (1-3 steps)
+	AuthMethod []components.AuthStep `json:"authMethod"`
 }
 
-func (u *UpdateAuthMethodResponseBody) GetMessage() *string {
+func (u *UpdateAuthMethodRequest) GetAuthMethod() []components.AuthStep {
 	if u == nil {
-		return nil
+		return []components.AuthStep{}
 	}
-	return u.Message
+	return u.AuthMethod
 }
 
 type UpdateAuthMethodResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Authentication methods updated successfully
-	Object *UpdateAuthMethodResponseBody
+	UpdateAuthMethodResponse *components.UpdateAuthMethodResponse
 }
 
 func (u UpdateAuthMethodResponse) MarshalJSON() ([]byte, error) {
@@ -43,9 +44,9 @@ func (u *UpdateAuthMethodResponse) GetHTTPMeta() components.HTTPMetadata {
 	return u.HTTPMeta
 }
 
-func (u *UpdateAuthMethodResponse) GetObject() *UpdateAuthMethodResponseBody {
+func (u *UpdateAuthMethodResponse) GetUpdateAuthMethodResponse() *components.UpdateAuthMethodResponse {
 	if u == nil {
 		return nil
 	}
-	return u.Object
+	return u.UpdateAuthMethodResponse
 }

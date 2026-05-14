@@ -3,8 +3,11 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
 type UnarchiveSearchRequest struct {
@@ -19,16 +22,128 @@ func (u *UnarchiveSearchRequest) GetSearchID() string {
 	return u.SearchID
 }
 
-// UnarchiveSearchResponseBody - Search unarchived successfully
-type UnarchiveSearchResponseBody struct {
-	Message *string `json:"message,omitzero"`
+// UnarchiveSearchStatus - Resulting status of the search after the operation.
+type UnarchiveSearchStatus string
+
+const (
+	UnarchiveSearchStatusUnarchived UnarchiveSearchStatus = "unarchived"
+)
+
+func (e UnarchiveSearchStatus) ToPointer() *UnarchiveSearchStatus {
+	return &e
+}
+func (e *UnarchiveSearchStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "unarchived":
+		*e = UnarchiveSearchStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for UnarchiveSearchStatus: %v", v)
+	}
 }
 
-func (u *UnarchiveSearchResponseBody) GetMessage() *string {
+type UnarchiveSearchMeta struct {
+	// Server-assigned request identifier for tracing. Omitted when not available.
+	RequestID *string `json:"requestId,omitzero"`
+	// Server timestamp when the response was produced.
+	Timestamp time.Time `json:"timestamp"`
+	// Time taken to process the request, in milliseconds.
+	Duration int64 `json:"duration"`
+}
+
+func (u UnarchiveSearchMeta) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UnarchiveSearchMeta) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UnarchiveSearchMeta) GetRequestID() *string {
 	if u == nil {
 		return nil
 	}
-	return u.Message
+	return u.RequestID
+}
+
+func (u *UnarchiveSearchMeta) GetTimestamp() time.Time {
+	if u == nil {
+		return time.Time{}
+	}
+	return u.Timestamp
+}
+
+func (u *UnarchiveSearchMeta) GetDuration() int64 {
+	if u == nil {
+		return 0
+	}
+	return u.Duration
+}
+
+// UnarchiveSearchResponseBody - Search unarchived successfully
+type UnarchiveSearchResponseBody struct {
+	// Unique identifier of the unarchived search.
+	ID string `json:"id"`
+	// Resulting status of the search after the operation.
+	Status UnarchiveSearchStatus `json:"status"`
+	// User ID of the user who unarchived the search.
+	UnarchivedBy string `json:"unarchivedBy"`
+	// Timestamp when the search was unarchived.
+	UnarchivedAt time.Time           `json:"unarchivedAt"`
+	Meta         UnarchiveSearchMeta `json:"meta"`
+}
+
+func (u UnarchiveSearchResponseBody) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UnarchiveSearchResponseBody) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UnarchiveSearchResponseBody) GetID() string {
+	if u == nil {
+		return ""
+	}
+	return u.ID
+}
+
+func (u *UnarchiveSearchResponseBody) GetStatus() UnarchiveSearchStatus {
+	if u == nil {
+		return UnarchiveSearchStatus("")
+	}
+	return u.Status
+}
+
+func (u *UnarchiveSearchResponseBody) GetUnarchivedBy() string {
+	if u == nil {
+		return ""
+	}
+	return u.UnarchivedBy
+}
+
+func (u *UnarchiveSearchResponseBody) GetUnarchivedAt() time.Time {
+	if u == nil {
+		return time.Time{}
+	}
+	return u.UnarchivedAt
+}
+
+func (u *UnarchiveSearchResponseBody) GetMeta() UnarchiveSearchMeta {
+	if u == nil {
+		return UnarchiveSearchMeta{}
+	}
+	return u.Meta
 }
 
 type UnarchiveSearchResponse struct {

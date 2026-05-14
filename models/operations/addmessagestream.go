@@ -8,6 +8,9 @@ import (
 )
 
 type AddMessageStreamRequest struct {
+	// Identifier of the conversation to append the message to. The
+	// conversation must belong to the caller and must not be deleted.
+	//
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
 	// Request payload
 	Body components.AddMessageRequest `request:"mediaType=application/json"`
@@ -29,8 +32,11 @@ func (a *AddMessageStreamRequest) GetBody() components.AddMessageRequest {
 
 type AddMessageStreamResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// SSE stream established
-	SSEEvent *stream.EventStream[components.SSEEvent]
+	// SSE stream established. The body is a sequence of
+	// `text/event-stream` frames using the event vocabulary described
+	// on the schema below.
+	//
+	AssistantMessageStreamSSEEvent *stream.EventStream[components.AssistantMessageStreamSSEEvent]
 }
 
 func (a *AddMessageStreamResponse) GetHTTPMeta() components.HTTPMetadata {
@@ -40,9 +46,9 @@ func (a *AddMessageStreamResponse) GetHTTPMeta() components.HTTPMetadata {
 	return a.HTTPMeta
 }
 
-func (a *AddMessageStreamResponse) GetSSEEvent() *stream.EventStream[components.SSEEvent] {
+func (a *AddMessageStreamResponse) GetAssistantMessageStreamSSEEvent() *stream.EventStream[components.AssistantMessageStreamSSEEvent] {
 	if a == nil {
 		return nil
 	}
-	return a.SSEEvent
+	return a.AssistantMessageStreamSSEEvent
 }

@@ -2,28 +2,24 @@
 
 package components
 
-import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-)
-
-type InitAuthResponseAllowedMethod string
+type AllowedMethod string
 
 const (
-	InitAuthResponseAllowedMethodSamlSso   InitAuthResponseAllowedMethod = "samlSso"
-	InitAuthResponseAllowedMethodOtp       InitAuthResponseAllowedMethod = "otp"
-	InitAuthResponseAllowedMethodPassword  InitAuthResponseAllowedMethod = "password"
-	InitAuthResponseAllowedMethodGoogle    InitAuthResponseAllowedMethod = "google"
-	InitAuthResponseAllowedMethodMicrosoft InitAuthResponseAllowedMethod = "microsoft"
-	InitAuthResponseAllowedMethodAzureAd   InitAuthResponseAllowedMethod = "azureAd"
-	InitAuthResponseAllowedMethodOauth     InitAuthResponseAllowedMethod = "oauth"
+	AllowedMethodSamlSso   AllowedMethod = "samlSso"
+	AllowedMethodOtp       AllowedMethod = "otp"
+	AllowedMethodPassword  AllowedMethod = "password"
+	AllowedMethodGoogle    AllowedMethod = "google"
+	AllowedMethodMicrosoft AllowedMethod = "microsoft"
+	AllowedMethodAzureAd   AllowedMethod = "azureAd"
+	AllowedMethodOauth     AllowedMethod = "oauth"
 )
 
-func (e InitAuthResponseAllowedMethod) ToPointer() *InitAuthResponseAllowedMethod {
+func (e AllowedMethod) ToPointer() *AllowedMethod {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *InitAuthResponseAllowedMethod) IsExact() bool {
+func (e *AllowedMethod) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "samlSso", "otp", "password", "google", "microsoft", "azureAd", "oauth":
@@ -36,50 +32,48 @@ func (e *InitAuthResponseAllowedMethod) IsExact() bool {
 // InitAuthResponse - Response containing available authentication methods and session info
 type InitAuthResponse struct {
 	// Current authentication step (0-indexed). Always 0 for initial response.
-	CurrentStep *int64 `json:"currentStep,omitzero"`
+	CurrentStep int64 `json:"currentStep"`
 	// List of allowed authentication methods for the current step
-	AllowedMethods []InitAuthResponseAllowedMethod `json:"allowedMethods,omitzero"`
+	AllowedMethods []AllowedMethod `json:"allowedMethods"`
 	// Response message
-	Message *string `json:"message,omitzero"`
+	Message string `json:"message"`
 	// Configuration for external authentication providers (returned when those methods are allowed)
-	AuthProviders *AuthProviders `json:"authProviders,omitzero"`
+	AuthProviders AuthProviders `json:"authProviders"`
+	// True when at least one allowed external provider has JIT provisioning enabled
+	JitEnabled bool `json:"jitEnabled"`
 }
 
-func (i InitAuthResponse) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(i, "", false)
-}
-
-func (i *InitAuthResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &i, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (i *InitAuthResponse) GetCurrentStep() *int64 {
+func (i *InitAuthResponse) GetCurrentStep() int64 {
 	if i == nil {
-		return nil
+		return 0
 	}
 	return i.CurrentStep
 }
 
-func (i *InitAuthResponse) GetAllowedMethods() []InitAuthResponseAllowedMethod {
+func (i *InitAuthResponse) GetAllowedMethods() []AllowedMethod {
 	if i == nil {
-		return nil
+		return []AllowedMethod{}
 	}
 	return i.AllowedMethods
 }
 
-func (i *InitAuthResponse) GetMessage() *string {
+func (i *InitAuthResponse) GetMessage() string {
 	if i == nil {
-		return nil
+		return ""
 	}
 	return i.Message
 }
 
-func (i *InitAuthResponse) GetAuthProviders() *AuthProviders {
+func (i *InitAuthResponse) GetAuthProviders() AuthProviders {
 	if i == nil {
-		return nil
+		return AuthProviders{}
 	}
 	return i.AuthProviders
+}
+
+func (i *InitAuthResponse) GetJitEnabled() bool {
+	if i == nil {
+		return false
+	}
+	return i.JitEnabled
 }

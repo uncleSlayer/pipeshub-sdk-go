@@ -11,6 +11,8 @@ import (
 type ResetPasswordRequest struct {
 	CurrentPassword string `json:"currentPassword"`
 	NewPassword     string `json:"newPassword"`
+	// Cloudflare Turnstile CAPTCHA token (required when Turnstile is configured server-side)
+	CfTurnstileResponse *string `json:"cf-turnstile-response,omitzero"`
 }
 
 func (r *ResetPasswordRequest) GetCurrentPassword() string {
@@ -27,22 +29,17 @@ func (r *ResetPasswordRequest) GetNewPassword() string {
 	return r.NewPassword
 }
 
-// ResetPasswordResponseBody - Password reset successfully
-type ResetPasswordResponseBody struct {
-	Message *string `json:"message,omitzero"`
-}
-
-func (r *ResetPasswordResponseBody) GetMessage() *string {
+func (r *ResetPasswordRequest) GetCfTurnstileResponse() *string {
 	if r == nil {
 		return nil
 	}
-	return r.Message
+	return r.CfTurnstileResponse
 }
 
 type ResetPasswordResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Password reset successfully
-	Object *ResetPasswordResponseBody
+	// Password reset successfully - returns new access token
+	AuthenticatedPasswordResetResponse *components.AuthenticatedPasswordResetResponse
 }
 
 func (r ResetPasswordResponse) MarshalJSON() ([]byte, error) {
@@ -63,9 +60,9 @@ func (r *ResetPasswordResponse) GetHTTPMeta() components.HTTPMetadata {
 	return r.HTTPMeta
 }
 
-func (r *ResetPasswordResponse) GetObject() *ResetPasswordResponseBody {
+func (r *ResetPasswordResponse) GetAuthenticatedPasswordResetResponse() *components.AuthenticatedPasswordResetResponse {
 	if r == nil {
 		return nil
 	}
-	return r.Object
+	return r.AuthenticatedPasswordResetResponse
 }

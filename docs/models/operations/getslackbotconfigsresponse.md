@@ -1,9 +1,0 @@
-# GetSlackBotConfigsResponse
-
-
-## Fields
-
-| Field                                                                                                   | Type                                                                                                    | Required                                                                                                | Description                                                                                             |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                              | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                      | :heavy_check_mark:                                                                                      | N/A                                                                                                     |
-| `Object`                                                                                                | [*operations.GetSlackBotConfigsResponseBody](../../models/operations/getslackbotconfigsresponsebody.md) | :heavy_minus_sign:                                                                                      | Slack bot configs retrieved                                                                             |

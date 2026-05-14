@@ -3,27 +3,177 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
-type GetKnowledgeHubRootNodesRequest struct {
-	// View mode
-	View  *string `queryParam:"style=form,explode=true,name=view"`
-	Page  *int64  `queryParam:"style=form,explode=true,name=page"`
-	Limit *int64  `queryParam:"style=form,explode=true,name=limit"`
-	// Filter by node types (comma-separated)
-	NodeTypes *string `queryParam:"style=form,explode=true,name=nodeTypes"`
-	// Search query
-	Q *string `queryParam:"style=form,explode=true,name=q"`
+// GetKnowledgeHubRootNodesSortBy - Field to sort results by. Omitted → default `updatedAt`.
+// Unknown value → silently falls back to `name`.
+type GetKnowledgeHubRootNodesSortBy string
+
+const (
+	GetKnowledgeHubRootNodesSortByName      GetKnowledgeHubRootNodesSortBy = "name"
+	GetKnowledgeHubRootNodesSortByCreatedAt GetKnowledgeHubRootNodesSortBy = "createdAt"
+	GetKnowledgeHubRootNodesSortByUpdatedAt GetKnowledgeHubRootNodesSortBy = "updatedAt"
+	GetKnowledgeHubRootNodesSortBySize      GetKnowledgeHubRootNodesSortBy = "size"
+	GetKnowledgeHubRootNodesSortByType      GetKnowledgeHubRootNodesSortBy = "type"
+)
+
+func (e GetKnowledgeHubRootNodesSortBy) ToPointer() *GetKnowledgeHubRootNodesSortBy {
+	return &e
+}
+func (e *GetKnowledgeHubRootNodesSortBy) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "name":
+		fallthrough
+	case "createdAt":
+		fallthrough
+	case "updatedAt":
+		fallthrough
+	case "size":
+		fallthrough
+	case "type":
+		*e = GetKnowledgeHubRootNodesSortBy(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubRootNodesSortBy: %v", v)
+	}
 }
 
-func (g *GetKnowledgeHubRootNodesRequest) GetView() *string {
+// GetKnowledgeHubRootNodesSortOrder - Sort direction. Omitted → default `desc`.
+// Unknown value → silently falls back to `asc`.
+type GetKnowledgeHubRootNodesSortOrder string
+
+const (
+	GetKnowledgeHubRootNodesSortOrderAsc  GetKnowledgeHubRootNodesSortOrder = "asc"
+	GetKnowledgeHubRootNodesSortOrderDesc GetKnowledgeHubRootNodesSortOrder = "desc"
+)
+
+func (e GetKnowledgeHubRootNodesSortOrder) ToPointer() *GetKnowledgeHubRootNodesSortOrder {
+	return &e
+}
+func (e *GetKnowledgeHubRootNodesSortOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "asc":
+		fallthrough
+	case "desc":
+		*e = GetKnowledgeHubRootNodesSortOrder(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubRootNodesSortOrder: %v", v)
+	}
+}
+
+type GetKnowledgeHubRootNodesRequest struct {
+	// When `true`, only nodes that have children are returned (useful for
+	// building sidebar / tree navigation). Leaf nodes are excluded.
+	//
+	OnlyContainers *bool `default:"false" queryParam:"style=form,explode=true,name=onlyContainers"`
+	// Page number (1-indexed). Combined with `limit` to paginate results.
+	//
+	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Maximum number of items to return per page.
+	//
+	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
+	// Field to sort results by. Omitted → default `updatedAt`.
+	// Unknown value → silently falls back to `name`.
+	//
+	SortBy *GetKnowledgeHubRootNodesSortBy `default:"updatedAt" queryParam:"style=form,explode=true,name=sortBy"`
+	// Sort direction. Omitted → default `desc`.
+	// Unknown value → silently falls back to `asc`.
+	//
+	SortOrder *GetKnowledgeHubRootNodesSortOrder `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
+	// Full-text search query. Must be between 2 and 500 characters
+	// (inclusive). When provided, the endpoint searches across the entire
+	// node tree regardless of the current browse level.
+	//
+	Q *string `queryParam:"style=form,explode=true,name=q"`
+	// Comma-separated list of node types to include. Invalid values are
+	// silently ignored. Maximum 100 items.
+	//
+	// Valid values: `folder`, `app`, `recordGroup`, `record`
+	//
+	NodeTypes *string `queryParam:"style=form,explode=true,name=nodeTypes"`
+	// Comma-separated list of record types to include. Invalid values are
+	// silently ignored. Maximum 100 items.
+	//
+	// Valid values: `FILE`, `DRIVE`, `WEBPAGE`, `DATABASE`, `DATASOURCE`,
+	// `MESSAGE`, `MAIL`, `GROUP_MAIL`, `TICKET`, `COMMENT`,
+	// `INLINE_COMMENT`, `CONFLUENCE_PAGE`, `CONFLUENCE_BLOGPOST`,
+	// `SHAREPOINT_PAGE`, `SHAREPOINT_LIST`, `SHAREPOINT_LIST_ITEM`,
+	// `SHAREPOINT_DOCUMENT_LIBRARY`, `LINK`, `PROJECT`, `PULL_REQUEST`,
+	// `MEETING`, `PRODUCT`, `DEAL`, `CASE`, `TASK`, `ARTIFACT`,
+	// `CODE_FILE`, `SQL_TABLE`, `SQL_VIEW`, `OTHERS`
+	//
+	RecordTypes *string `queryParam:"style=form,explode=true,name=recordTypes"`
+	// Comma-separated list of origin types to include. Invalid values are
+	// silently ignored. Maximum 100 items.
+	//
+	// Valid values: `COLLECTION`, `CONNECTOR`
+	//
+	Origins *string `queryParam:"style=form,explode=true,name=origins"`
+	// Comma-separated list of connector instance IDs (UUIDs) to filter by.
+	// Maximum 100 items. No enum validation — any string is accepted, but
+	// non-existent IDs simply yield zero results.
+	//
+	ConnectorIds *string `queryParam:"style=form,explode=true,name=connectorIds"`
+	// Comma-separated list of indexing statuses to include. Invalid values
+	// are silently ignored. Maximum 100 items.
+	//
+	// Valid values: `NOT_STARTED`, `PAUSED`, `IN_PROGRESS`, `COMPLETED`,
+	// `FAILED`, `FILE_TYPE_NOT_SUPPORTED`, `AUTO_INDEX_OFF`, `EMPTY`,
+	// `ENABLE_MULTIMODAL_MODELS`, `QUEUED`
+	//
+	IndexingStatus *string `queryParam:"style=form,explode=true,name=indexingStatus"`
+	// Created-date range filter. Format: `gte:<epochMs>,lte:<epochMs>`.
+	// Both bounds are optional (you may send just `gte:...` or just
+	// `lte:...`). Timestamps must be in the range 0 to 9999999999999 and
+	// `gte` must be less than or equal to `lte` when both are present.
+	//
+	CreatedAt *string `queryParam:"style=form,explode=true,name=createdAt"`
+	// Updated-date range filter. Same format and constraints as `createdAt`.
+	//
+	UpdatedAt *string `queryParam:"style=form,explode=true,name=updatedAt"`
+	// File-size range filter in bytes. Format: `gte:<bytes>,lte:<bytes>`.
+	// Both bounds are optional. Values must be non-negative and at most
+	// 1099511627776 (1 TB). `gte` must be less than or equal to `lte`
+	// when both are present.
+	//
+	Size *string `queryParam:"style=form,explode=true,name=size"`
+	// Comma-separated list of additional response sections to include.
+	// Invalid values are silently ignored. Maximum 100 items.
+	//
+	// Valid values: `breadcrumbs`, `counts`, `availableFilters`, `permissions`
+	//
+	Include *string `queryParam:"style=form,explode=true,name=include"`
+}
+
+func (g GetKnowledgeHubRootNodesRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetOnlyContainers() *bool {
 	if g == nil {
 		return nil
 	}
-	return g.View
+	return g.OnlyContainers
 }
 
 func (g *GetKnowledgeHubRootNodesRequest) GetPage() *int64 {
@@ -40,11 +190,18 @@ func (g *GetKnowledgeHubRootNodesRequest) GetLimit() *int64 {
 	return g.Limit
 }
 
-func (g *GetKnowledgeHubRootNodesRequest) GetNodeTypes() *string {
+func (g *GetKnowledgeHubRootNodesRequest) GetSortBy() *GetKnowledgeHubRootNodesSortBy {
 	if g == nil {
 		return nil
 	}
-	return g.NodeTypes
+	return g.SortBy
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetSortOrder() *GetKnowledgeHubRootNodesSortOrder {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
 }
 
 func (g *GetKnowledgeHubRootNodesRequest) GetQ() *string {
@@ -54,338 +211,250 @@ func (g *GetKnowledgeHubRootNodesRequest) GetQ() *string {
 	return g.Q
 }
 
-type CurrentNode struct {
+func (g *GetKnowledgeHubRootNodesRequest) GetNodeTypes() *string {
+	if g == nil {
+		return nil
+	}
+	return g.NodeTypes
 }
 
-type ParentNode struct {
+func (g *GetKnowledgeHubRootNodesRequest) GetRecordTypes() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RecordTypes
 }
 
-type NodeType string
+func (g *GetKnowledgeHubRootNodesRequest) GetOrigins() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Origins
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetConnectorIds() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ConnectorIds
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetIndexingStatus() *string {
+	if g == nil {
+		return nil
+	}
+	return g.IndexingStatus
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetCreatedAt() *string {
+	if g == nil {
+		return nil
+	}
+	return g.CreatedAt
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetUpdatedAt() *string {
+	if g == nil {
+		return nil
+	}
+	return g.UpdatedAt
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetSize() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Size
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetInclude() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Include
+}
+
+type GetKnowledgeHubRootNodesCodeHTTPInternalServerError string
 
 const (
-	NodeTypeKb        NodeType = "kb"
-	NodeTypeFolder    NodeType = "folder"
-	NodeTypeRecord    NodeType = "record"
-	NodeTypeConnector NodeType = "connector"
-	NodeTypeApp       NodeType = "app"
+	GetKnowledgeHubRootNodesCodeHTTPInternalServerErrorHTTPInternalServerError GetKnowledgeHubRootNodesCodeHTTPInternalServerError = "HTTP_INTERNAL_SERVER_ERROR"
 )
 
-func (e NodeType) ToPointer() *NodeType {
+func (e GetKnowledgeHubRootNodesCodeHTTPInternalServerError) ToPointer() *GetKnowledgeHubRootNodesCodeHTTPInternalServerError {
 	return &e
 }
-
-// IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *NodeType) IsExact() bool {
-	if e != nil {
-		switch *e {
-		case "kb", "folder", "record", "connector", "app":
-			return true
-		}
-	}
-	return false
-}
-
-type Item struct {
-	ID             *string                                   `json:"id,omitzero"`
-	Name           *string                                   `json:"name,omitzero"`
-	NodeType       *NodeType                                 `json:"nodeType,omitzero"`
-	ParentID       optionalnullable.OptionalNullable[string] `json:"parentId,omitzero"`
-	Origin         *string                                   `json:"origin,omitzero"`
-	Connector      *string                                   `json:"connector,omitzero"`
-	RecordType     optionalnullable.OptionalNullable[string] `json:"recordType,omitzero"`
-	IndexingStatus optionalnullable.OptionalNullable[string] `json:"indexingStatus,omitzero"`
-	CreatedAt      *int64                                    `json:"createdAt,omitzero"`
-	UpdatedAt      *int64                                    `json:"updatedAt,omitzero"`
-	SizeInBytes    optionalnullable.OptionalNullable[int64]  `json:"sizeInBytes,omitzero"`
-	MimeType       optionalnullable.OptionalNullable[string] `json:"mimeType,omitzero"`
-	Extension      optionalnullable.OptionalNullable[string] `json:"extension,omitzero"`
-	WebURL         *string                                   `json:"webUrl,omitzero"`
-	HasChildren    *bool                                     `json:"hasChildren,omitzero"`
-	SharingStatus  *string                                   `json:"sharingStatus,omitzero"`
-}
-
-func (i *Item) GetID() *string {
-	if i == nil {
-		return nil
-	}
-	return i.ID
-}
-
-func (i *Item) GetName() *string {
-	if i == nil {
-		return nil
-	}
-	return i.Name
-}
-
-func (i *Item) GetNodeType() *NodeType {
-	if i == nil {
-		return nil
-	}
-	return i.NodeType
-}
-
-func (i *Item) GetParentID() optionalnullable.OptionalNullable[string] {
-	if i == nil {
-		return nil
-	}
-	return i.ParentID
-}
-
-func (i *Item) GetOrigin() *string {
-	if i == nil {
-		return nil
-	}
-	return i.Origin
-}
-
-func (i *Item) GetConnector() *string {
-	if i == nil {
-		return nil
-	}
-	return i.Connector
-}
-
-func (i *Item) GetRecordType() optionalnullable.OptionalNullable[string] {
-	if i == nil {
-		return nil
-	}
-	return i.RecordType
-}
-
-func (i *Item) GetIndexingStatus() optionalnullable.OptionalNullable[string] {
-	if i == nil {
-		return nil
-	}
-	return i.IndexingStatus
-}
-
-func (i *Item) GetCreatedAt() *int64 {
-	if i == nil {
-		return nil
-	}
-	return i.CreatedAt
-}
-
-func (i *Item) GetUpdatedAt() *int64 {
-	if i == nil {
-		return nil
-	}
-	return i.UpdatedAt
-}
-
-func (i *Item) GetSizeInBytes() optionalnullable.OptionalNullable[int64] {
-	if i == nil {
-		return nil
-	}
-	return i.SizeInBytes
-}
-
-func (i *Item) GetMimeType() optionalnullable.OptionalNullable[string] {
-	if i == nil {
-		return nil
-	}
-	return i.MimeType
-}
-
-func (i *Item) GetExtension() optionalnullable.OptionalNullable[string] {
-	if i == nil {
-		return nil
-	}
-	return i.Extension
-}
-
-func (i *Item) GetWebURL() *string {
-	if i == nil {
-		return nil
-	}
-	return i.WebURL
-}
-
-func (i *Item) GetHasChildren() *bool {
-	if i == nil {
-		return nil
-	}
-	return i.HasChildren
-}
-
-func (i *Item) GetSharingStatus() *string {
-	if i == nil {
-		return nil
-	}
-	return i.SharingStatus
-}
-
-type GetKnowledgeHubRootNodesPagination struct {
-	Page       *int64 `json:"page,omitzero"`
-	Limit      *int64 `json:"limit,omitzero"`
-	TotalItems *int64 `json:"totalItems,omitzero"`
-	TotalPages *int64 `json:"totalPages,omitzero"`
-	HasNext    *bool  `json:"hasNext,omitzero"`
-	HasPrev    *bool  `json:"hasPrev,omitzero"`
-}
-
-func (g *GetKnowledgeHubRootNodesPagination) GetPage() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.Page
-}
-
-func (g *GetKnowledgeHubRootNodesPagination) GetLimit() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.Limit
-}
-
-func (g *GetKnowledgeHubRootNodesPagination) GetTotalItems() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.TotalItems
-}
-
-func (g *GetKnowledgeHubRootNodesPagination) GetTotalPages() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.TotalPages
-}
-
-func (g *GetKnowledgeHubRootNodesPagination) GetHasNext() *bool {
-	if g == nil {
-		return nil
-	}
-	return g.HasNext
-}
-
-func (g *GetKnowledgeHubRootNodesPagination) GetHasPrev() *bool {
-	if g == nil {
-		return nil
-	}
-	return g.HasPrev
-}
-
-type GetKnowledgeHubRootNodesFilters struct {
-}
-
-type Breadcrumb struct {
-}
-
-type GetKnowledgeHubRootNodesCounts struct {
-}
-
-type Permissions struct {
-}
-
-// GetKnowledgeHubRootNodesResponseBody - Root nodes retrieved
-type GetKnowledgeHubRootNodesResponseBody struct {
-	Success     *bool                                                              `json:"success,omitzero"`
-	Error       optionalnullable.OptionalNullable[string]                          `json:"error,omitzero"`
-	ID          optionalnullable.OptionalNullable[string]                          `json:"id,omitzero"`
-	CurrentNode optionalnullable.OptionalNullable[CurrentNode]                     `json:"currentNode,omitzero"`
-	ParentNode  optionalnullable.OptionalNullable[ParentNode]                      `json:"parentNode,omitzero"`
-	Items       []Item                                                             `json:"items,omitzero"`
-	Pagination  *GetKnowledgeHubRootNodesPagination                                `json:"pagination,omitzero"`
-	Filters     optionalnullable.OptionalNullable[GetKnowledgeHubRootNodesFilters] `json:"filters,omitzero"`
-	Breadcrumbs optionalnullable.OptionalNullable[[]Breadcrumb]                    `json:"breadcrumbs,omitzero"`
-	Counts      optionalnullable.OptionalNullable[GetKnowledgeHubRootNodesCounts]  `json:"counts,omitzero"`
-	Permissions optionalnullable.OptionalNullable[Permissions]                     `json:"permissions,omitzero"`
-}
-
-func (g GetKnowledgeHubRootNodesResponseBody) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(g, "", false)
-}
-
-func (g *GetKnowledgeHubRootNodesResponseBody) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+func (e *GetKnowledgeHubRootNodesCodeHTTPInternalServerError) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	return nil
+	switch v {
+	case "HTTP_INTERNAL_SERVER_ERROR":
+		*e = GetKnowledgeHubRootNodesCodeHTTPInternalServerError(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubRootNodesCodeHTTPInternalServerError: %v", v)
+	}
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetSuccess() *bool {
-	if g == nil {
-		return nil
-	}
-	return g.Success
+type GetKnowledgeHubRootNodesErrorHTTPInternalServerError struct {
+	Code    GetKnowledgeHubRootNodesCodeHTTPInternalServerError `json:"code"`
+	Message string                                              `json:"message"`
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetError() optionalnullable.OptionalNullable[string] {
+func (g *GetKnowledgeHubRootNodesErrorHTTPInternalServerError) GetCode() GetKnowledgeHubRootNodesCodeHTTPInternalServerError {
 	if g == nil {
-		return nil
+		return GetKnowledgeHubRootNodesCodeHTTPInternalServerError("")
 	}
-	return g.Error
+	return g.Code
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetID() optionalnullable.OptionalNullable[string] {
+func (g *GetKnowledgeHubRootNodesErrorHTTPInternalServerError) GetMessage() string {
 	if g == nil {
-		return nil
+		return ""
 	}
-	return g.ID
+	return g.Message
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetCurrentNode() optionalnullable.OptionalNullable[CurrentNode] {
-	if g == nil {
-		return nil
+type GetKnowledgeHubRootNodesForbiddenCode string
+
+const (
+	GetKnowledgeHubRootNodesForbiddenCodeHTTPForbidden GetKnowledgeHubRootNodesForbiddenCode = "HTTP_FORBIDDEN"
+)
+
+func (e GetKnowledgeHubRootNodesForbiddenCode) ToPointer() *GetKnowledgeHubRootNodesForbiddenCode {
+	return &e
+}
+func (e *GetKnowledgeHubRootNodesForbiddenCode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
 	}
-	return g.CurrentNode
+	switch v {
+	case "HTTP_FORBIDDEN":
+		*e = GetKnowledgeHubRootNodesForbiddenCode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubRootNodesForbiddenCode: %v", v)
+	}
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetParentNode() optionalnullable.OptionalNullable[ParentNode] {
-	if g == nil {
-		return nil
-	}
-	return g.ParentNode
+type GetKnowledgeHubRootNodesErrorHTTPForbidden struct {
+	Code    GetKnowledgeHubRootNodesForbiddenCode `json:"code"`
+	Message string                                `json:"message"`
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetItems() []Item {
+func (g *GetKnowledgeHubRootNodesErrorHTTPForbidden) GetCode() GetKnowledgeHubRootNodesForbiddenCode {
 	if g == nil {
-		return nil
+		return GetKnowledgeHubRootNodesForbiddenCode("")
 	}
-	return g.Items
+	return g.Code
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetPagination() *GetKnowledgeHubRootNodesPagination {
+func (g *GetKnowledgeHubRootNodesErrorHTTPForbidden) GetMessage() string {
 	if g == nil {
-		return nil
+		return ""
 	}
-	return g.Pagination
+	return g.Message
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetFilters() optionalnullable.OptionalNullable[GetKnowledgeHubRootNodesFilters] {
-	if g == nil {
-		return nil
+type GetKnowledgeHubRootNodesUnauthorizedCode string
+
+const (
+	GetKnowledgeHubRootNodesUnauthorizedCodeHTTPUnauthorized GetKnowledgeHubRootNodesUnauthorizedCode = "HTTP_UNAUTHORIZED"
+)
+
+func (e GetKnowledgeHubRootNodesUnauthorizedCode) ToPointer() *GetKnowledgeHubRootNodesUnauthorizedCode {
+	return &e
+}
+func (e *GetKnowledgeHubRootNodesUnauthorizedCode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
 	}
-	return g.Filters
+	switch v {
+	case "HTTP_UNAUTHORIZED":
+		*e = GetKnowledgeHubRootNodesUnauthorizedCode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubRootNodesUnauthorizedCode: %v", v)
+	}
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetBreadcrumbs() optionalnullable.OptionalNullable[[]Breadcrumb] {
-	if g == nil {
-		return nil
-	}
-	return g.Breadcrumbs
+type GetKnowledgeHubRootNodesErrorHTTPUnauthorized struct {
+	Code    GetKnowledgeHubRootNodesUnauthorizedCode `json:"code"`
+	Message string                                   `json:"message"`
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetCounts() optionalnullable.OptionalNullable[GetKnowledgeHubRootNodesCounts] {
+func (g *GetKnowledgeHubRootNodesErrorHTTPUnauthorized) GetCode() GetKnowledgeHubRootNodesUnauthorizedCode {
 	if g == nil {
-		return nil
+		return GetKnowledgeHubRootNodesUnauthorizedCode("")
 	}
-	return g.Counts
+	return g.Code
 }
 
-func (g *GetKnowledgeHubRootNodesResponseBody) GetPermissions() optionalnullable.OptionalNullable[Permissions] {
+func (g *GetKnowledgeHubRootNodesErrorHTTPUnauthorized) GetMessage() string {
 	if g == nil {
-		return nil
+		return ""
 	}
-	return g.Permissions
+	return g.Message
+}
+
+type GetKnowledgeHubRootNodesCodeHTTPBadRequest string
+
+const (
+	GetKnowledgeHubRootNodesCodeHTTPBadRequestHTTPBadRequest GetKnowledgeHubRootNodesCodeHTTPBadRequest = "HTTP_BAD_REQUEST"
+)
+
+func (e GetKnowledgeHubRootNodesCodeHTTPBadRequest) ToPointer() *GetKnowledgeHubRootNodesCodeHTTPBadRequest {
+	return &e
+}
+func (e *GetKnowledgeHubRootNodesCodeHTTPBadRequest) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "HTTP_BAD_REQUEST":
+		*e = GetKnowledgeHubRootNodesCodeHTTPBadRequest(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubRootNodesCodeHTTPBadRequest: %v", v)
+	}
+}
+
+type GetKnowledgeHubRootNodesErrorHTTPBadRequest struct {
+	Code    GetKnowledgeHubRootNodesCodeHTTPBadRequest `json:"code"`
+	Message string                                     `json:"message"`
+}
+
+func (g *GetKnowledgeHubRootNodesErrorHTTPBadRequest) GetCode() GetKnowledgeHubRootNodesCodeHTTPBadRequest {
+	if g == nil {
+		return GetKnowledgeHubRootNodesCodeHTTPBadRequest("")
+	}
+	return g.Code
+}
+
+func (g *GetKnowledgeHubRootNodesErrorHTTPBadRequest) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
 }
 
 type GetKnowledgeHubRootNodesResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Root nodes retrieved
-	Object *GetKnowledgeHubRootNodesResponseBody
+	// Paginated list of root hub nodes (connector apps and Collections).
+	// HTTP 200 returns `success: true` and `error: null`. Field-level detail
+	// and required keys are defined on `KnowledgeHubNodesResponse`.
+	//
+	// Use `include` for optional sections: `availableFilters`, `counts`,
+	// `permissions` — each stays JSON `null` when not asked for.
+	// `breadcrumbs` stays `null` at this route (no parent in the path),
+	// even if `include` lists `breadcrumbs`; use the child route for trails.
+	// `id`, `currentNode`, and `parentNode` are `null` here.
+	//
+	KnowledgeHubNodesResponse *components.KnowledgeHubNodesResponse
 }
 
 func (g GetKnowledgeHubRootNodesResponse) MarshalJSON() ([]byte, error) {
@@ -406,7 +475,822 @@ func (g *GetKnowledgeHubRootNodesResponse) GetHTTPMeta() components.HTTPMetadata
 	return g.HTTPMeta
 }
 
-func (g *GetKnowledgeHubRootNodesResponse) GetObject() *GetKnowledgeHubRootNodesResponseBody {
+func (g *GetKnowledgeHubRootNodesResponse) GetKnowledgeHubNodesResponse() *components.KnowledgeHubNodesResponse {
+	if g == nil {
+		return nil
+	}
+	return g.KnowledgeHubNodesResponse
+}
+
+// ParentType - Type of the parent node whose children to retrieve.
+//
+// Must be one of: `app`, `recordGroup`, `folder`, `record`.
+// Any other value returns a 400 error.
+type ParentType string
+
+const (
+	ParentTypeApp         ParentType = "app"
+	ParentTypeRecordGroup ParentType = "recordGroup"
+	ParentTypeFolder      ParentType = "folder"
+	ParentTypeRecord      ParentType = "record"
+)
+
+func (e ParentType) ToPointer() *ParentType {
+	return &e
+}
+func (e *ParentType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "app":
+		fallthrough
+	case "recordGroup":
+		fallthrough
+	case "folder":
+		fallthrough
+	case "record":
+		*e = ParentType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ParentType: %v", v)
+	}
+}
+
+// GetKnowledgeHubChildNodesSortBy - Field to sort results by. Omitted → default `updatedAt`.
+// Unknown value → silently falls back to `name`.
+type GetKnowledgeHubChildNodesSortBy string
+
+const (
+	GetKnowledgeHubChildNodesSortByName      GetKnowledgeHubChildNodesSortBy = "name"
+	GetKnowledgeHubChildNodesSortByCreatedAt GetKnowledgeHubChildNodesSortBy = "createdAt"
+	GetKnowledgeHubChildNodesSortByUpdatedAt GetKnowledgeHubChildNodesSortBy = "updatedAt"
+	GetKnowledgeHubChildNodesSortBySize      GetKnowledgeHubChildNodesSortBy = "size"
+	GetKnowledgeHubChildNodesSortByType      GetKnowledgeHubChildNodesSortBy = "type"
+)
+
+func (e GetKnowledgeHubChildNodesSortBy) ToPointer() *GetKnowledgeHubChildNodesSortBy {
+	return &e
+}
+func (e *GetKnowledgeHubChildNodesSortBy) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "name":
+		fallthrough
+	case "createdAt":
+		fallthrough
+	case "updatedAt":
+		fallthrough
+	case "size":
+		fallthrough
+	case "type":
+		*e = GetKnowledgeHubChildNodesSortBy(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubChildNodesSortBy: %v", v)
+	}
+}
+
+// GetKnowledgeHubChildNodesSortOrder - Sort direction. Omitted → default `desc`.
+// Unknown value → silently falls back to `asc`.
+type GetKnowledgeHubChildNodesSortOrder string
+
+const (
+	GetKnowledgeHubChildNodesSortOrderAsc  GetKnowledgeHubChildNodesSortOrder = "asc"
+	GetKnowledgeHubChildNodesSortOrderDesc GetKnowledgeHubChildNodesSortOrder = "desc"
+)
+
+func (e GetKnowledgeHubChildNodesSortOrder) ToPointer() *GetKnowledgeHubChildNodesSortOrder {
+	return &e
+}
+func (e *GetKnowledgeHubChildNodesSortOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "asc":
+		fallthrough
+	case "desc":
+		*e = GetKnowledgeHubChildNodesSortOrder(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubChildNodesSortOrder: %v", v)
+	}
+}
+
+type GetKnowledgeHubChildNodesRequest struct {
+	// Type of the parent node whose children to retrieve.
+	//
+	// Must be one of: `app`, `recordGroup`, `folder`, `record`.
+	// Any other value returns a 400 error.
+	//
+	ParentType ParentType `pathParam:"style=simple,explode=false,name=parentType"`
+	// Identifier of the parent node. Accepts two formats:
+	// - A standard UUID (e.g. `f3a4b5b6-5b6c-4e85-9097-3202cfe696fc`)
+	// - The Collection app sentinel `knowledgeBase_<orgId>`
+	//   (e.g. `knowledgeBase_org123`)
+	//
+	// Any value that does not match either format returns a 400 error.
+	//
+	ParentID string `pathParam:"style=simple,explode=false,name=parentId"`
+	// When `true`, only nodes that have children are returned (useful for
+	// building sidebar / tree navigation). Leaf nodes are excluded.
+	//
+	OnlyContainers *bool `default:"false" queryParam:"style=form,explode=true,name=onlyContainers"`
+	// Page number (1-indexed). Combined with `limit` to paginate results.
+	//
+	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Maximum number of items to return per page.
+	//
+	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
+	// Field to sort results by. Omitted → default `updatedAt`.
+	// Unknown value → silently falls back to `name`.
+	//
+	SortBy *GetKnowledgeHubChildNodesSortBy `default:"updatedAt" queryParam:"style=form,explode=true,name=sortBy"`
+	// Sort direction. Omitted → default `desc`.
+	// Unknown value → silently falls back to `asc`.
+	//
+	SortOrder *GetKnowledgeHubChildNodesSortOrder `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
+	// Full-text search query. Must be between 2 and 500 characters
+	// (inclusive). When provided, the endpoint searches across all
+	// descendants of the parent node.
+	//
+	Q *string `queryParam:"style=form,explode=true,name=q"`
+	// Comma-separated list of node types to include. Invalid values are
+	// silently ignored. Maximum 100 items.
+	//
+	// Valid values: `folder`, `app`, `recordGroup`, `record`
+	//
+	NodeTypes *string `queryParam:"style=form,explode=true,name=nodeTypes"`
+	// Comma-separated list of record types to include. Invalid values are
+	// silently ignored. Maximum 100 items.
+	//
+	// Valid values: `FILE`, `DRIVE`, `WEBPAGE`, `DATABASE`, `DATASOURCE`,
+	// `MESSAGE`, `MAIL`, `GROUP_MAIL`, `TICKET`, `COMMENT`,
+	// `INLINE_COMMENT`, `CONFLUENCE_PAGE`, `CONFLUENCE_BLOGPOST`,
+	// `SHAREPOINT_PAGE`, `SHAREPOINT_LIST`, `SHAREPOINT_LIST_ITEM`,
+	// `SHAREPOINT_DOCUMENT_LIBRARY`, `LINK`, `PROJECT`, `PULL_REQUEST`,
+	// `MEETING`, `PRODUCT`, `DEAL`, `CASE`, `TASK`, `ARTIFACT`,
+	// `CODE_FILE`, `SQL_TABLE`, `SQL_VIEW`, `OTHERS`
+	//
+	RecordTypes *string `queryParam:"style=form,explode=true,name=recordTypes"`
+	// Comma-separated list of origin types to include. Invalid values are
+	// silently ignored. Maximum 100 items.
+	//
+	// Valid values: `COLLECTION`, `CONNECTOR`
+	//
+	Origins *string `queryParam:"style=form,explode=true,name=origins"`
+	// Comma-separated list of connector instance IDs (UUIDs) to filter by.
+	// Maximum 100 items. No enum validation — any string is accepted, but
+	// non-existent IDs simply yield zero results.
+	//
+	ConnectorIds *string `queryParam:"style=form,explode=true,name=connectorIds"`
+	// Comma-separated list of indexing statuses to include. Invalid values
+	// are silently ignored. Maximum 100 items.
+	//
+	// Valid values: `NOT_STARTED`, `PAUSED`, `IN_PROGRESS`, `COMPLETED`,
+	// `FAILED`, `FILE_TYPE_NOT_SUPPORTED`, `AUTO_INDEX_OFF`, `EMPTY`,
+	// `ENABLE_MULTIMODAL_MODELS`, `QUEUED`
+	//
+	IndexingStatus *string `queryParam:"style=form,explode=true,name=indexingStatus"`
+	// Created-date range filter. Format: `gte:<epochMs>,lte:<epochMs>`.
+	// Both bounds are optional (you may send just `gte:...` or just
+	// `lte:...`). Timestamps must be in the range 0 to 9999999999999 and
+	// `gte` must be less than or equal to `lte` when both are present.
+	//
+	CreatedAt *string `queryParam:"style=form,explode=true,name=createdAt"`
+	// Updated-date range filter. Same format and constraints as `createdAt`.
+	//
+	UpdatedAt *string `queryParam:"style=form,explode=true,name=updatedAt"`
+	// File-size range filter in bytes. Format: `gte:<bytes>,lte:<bytes>`.
+	// Both bounds are optional. Values must be non-negative and at most
+	// 1099511627776 (1 TB). `gte` must be less than or equal to `lte`
+	// when both are present.
+	//
+	Size *string `queryParam:"style=form,explode=true,name=size"`
+	// Comma-separated list of additional response sections to include.
+	// Invalid values are silently ignored. Maximum 100 items.
+	//
+	// Valid values: `breadcrumbs`, `counts`, `availableFilters`, `permissions`
+	//
+	Include *string `queryParam:"style=form,explode=true,name=include"`
+}
+
+func (g GetKnowledgeHubChildNodesRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetParentType() ParentType {
+	if g == nil {
+		return ParentType("")
+	}
+	return g.ParentType
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetParentID() string {
+	if g == nil {
+		return ""
+	}
+	return g.ParentID
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetOnlyContainers() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.OnlyContainers
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetPage() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Page
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetLimit() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Limit
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetSortBy() *GetKnowledgeHubChildNodesSortBy {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetSortOrder() *GetKnowledgeHubChildNodesSortOrder {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetQ() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Q
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetNodeTypes() *string {
+	if g == nil {
+		return nil
+	}
+	return g.NodeTypes
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetRecordTypes() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RecordTypes
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetOrigins() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Origins
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetConnectorIds() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ConnectorIds
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetIndexingStatus() *string {
+	if g == nil {
+		return nil
+	}
+	return g.IndexingStatus
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetCreatedAt() *string {
+	if g == nil {
+		return nil
+	}
+	return g.CreatedAt
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetUpdatedAt() *string {
+	if g == nil {
+		return nil
+	}
+	return g.UpdatedAt
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetSize() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Size
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetInclude() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Include
+}
+
+type GetKnowledgeHubChildNodesNotFoundCode string
+
+const (
+	GetKnowledgeHubChildNodesNotFoundCodeHTTPNotFound GetKnowledgeHubChildNodesNotFoundCode = "HTTP_NOT_FOUND"
+)
+
+func (e GetKnowledgeHubChildNodesNotFoundCode) ToPointer() *GetKnowledgeHubChildNodesNotFoundCode {
+	return &e
+}
+func (e *GetKnowledgeHubChildNodesNotFoundCode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "HTTP_NOT_FOUND":
+		*e = GetKnowledgeHubChildNodesNotFoundCode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubChildNodesNotFoundCode: %v", v)
+	}
+}
+
+type GetKnowledgeHubChildNodesNotFoundError struct {
+	Code    GetKnowledgeHubChildNodesNotFoundCode `json:"code"`
+	Message string                                `json:"message"`
+}
+
+func (g *GetKnowledgeHubChildNodesNotFoundError) GetCode() GetKnowledgeHubChildNodesNotFoundCode {
+	if g == nil {
+		return GetKnowledgeHubChildNodesNotFoundCode("")
+	}
+	return g.Code
+}
+
+func (g *GetKnowledgeHubChildNodesNotFoundError) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
+}
+
+type GetKnowledgeHubChildNodesCodeHTTPBadRequest string
+
+const (
+	GetKnowledgeHubChildNodesCodeHTTPBadRequestHTTPBadRequest GetKnowledgeHubChildNodesCodeHTTPBadRequest = "HTTP_BAD_REQUEST"
+)
+
+func (e GetKnowledgeHubChildNodesCodeHTTPBadRequest) ToPointer() *GetKnowledgeHubChildNodesCodeHTTPBadRequest {
+	return &e
+}
+func (e *GetKnowledgeHubChildNodesCodeHTTPBadRequest) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "HTTP_BAD_REQUEST":
+		*e = GetKnowledgeHubChildNodesCodeHTTPBadRequest(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetKnowledgeHubChildNodesCodeHTTPBadRequest: %v", v)
+	}
+}
+
+type GetKnowledgeHubChildNodesErrorHTTPBadRequest struct {
+	Code    GetKnowledgeHubChildNodesCodeHTTPBadRequest `json:"code"`
+	Message string                                      `json:"message"`
+}
+
+func (g *GetKnowledgeHubChildNodesErrorHTTPBadRequest) GetCode() GetKnowledgeHubChildNodesCodeHTTPBadRequest {
+	if g == nil {
+		return GetKnowledgeHubChildNodesCodeHTTPBadRequest("")
+	}
+	return g.Code
+}
+
+func (g *GetKnowledgeHubChildNodesErrorHTTPBadRequest) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
+}
+
+type GetKnowledgeHubChildNodesResponse struct {
+	HTTPMeta components.HTTPMetadata `json:"-"`
+	// Paginated children of `{parentType}/{parentId}`. HTTP 200 returns
+	// `success: true` and `error: null`; see `KnowledgeHubNodesResponse` for
+	// the full shape.
+	//
+	// `id` and `currentNode` reflect the parent being browsed; `parentNode`
+	// is set when a grandparent exists. Optional sections (`availableFilters`,
+	// `counts`, `permissions`, `breadcrumbs`) are JSON `null` unless listed
+	// in `include` and populated by the server.
+	//
+	KnowledgeHubNodesResponse *components.KnowledgeHubNodesResponse
+}
+
+func (g GetKnowledgeHubChildNodesResponse) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetKnowledgeHubChildNodesResponse) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetKnowledgeHubChildNodesResponse) GetHTTPMeta() components.HTTPMetadata {
+	if g == nil {
+		return components.HTTPMetadata{}
+	}
+	return g.HTTPMeta
+}
+
+func (g *GetKnowledgeHubChildNodesResponse) GetKnowledgeHubNodesResponse() *components.KnowledgeHubNodesResponse {
+	if g == nil {
+		return nil
+	}
+	return g.KnowledgeHubNodesResponse
+}
+
+type GetAvailableModelsByTypeRequest struct {
+	// Category of AI model to retrieve.
+	//
+	// Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`.
+	//
+	ModelType components.ModelType `pathParam:"style=simple,explode=false,name=modelType"`
+}
+
+func (g *GetAvailableModelsByTypeRequest) GetModelType() components.ModelType {
+	if g == nil {
+		return components.ModelType("")
+	}
+	return g.ModelType
+}
+
+type GetAvailableModelsByTypeForbiddenCode string
+
+const (
+	GetAvailableModelsByTypeForbiddenCodeHTTPForbidden GetAvailableModelsByTypeForbiddenCode = "HTTP_FORBIDDEN"
+)
+
+func (e GetAvailableModelsByTypeForbiddenCode) ToPointer() *GetAvailableModelsByTypeForbiddenCode {
+	return &e
+}
+func (e *GetAvailableModelsByTypeForbiddenCode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "HTTP_FORBIDDEN":
+		*e = GetAvailableModelsByTypeForbiddenCode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetAvailableModelsByTypeForbiddenCode: %v", v)
+	}
+}
+
+type GetAvailableModelsByTypeErrorHTTPForbidden struct {
+	Code    GetAvailableModelsByTypeForbiddenCode `json:"code"`
+	Message string                                `json:"message"`
+}
+
+func (g *GetAvailableModelsByTypeErrorHTTPForbidden) GetCode() GetAvailableModelsByTypeForbiddenCode {
+	if g == nil {
+		return GetAvailableModelsByTypeForbiddenCode("")
+	}
+	return g.Code
+}
+
+func (g *GetAvailableModelsByTypeErrorHTTPForbidden) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
+}
+
+type GetAvailableModelsByTypeCodeValidationError string
+
+const (
+	GetAvailableModelsByTypeCodeValidationErrorValidationError GetAvailableModelsByTypeCodeValidationError = "VALIDATION_ERROR"
+)
+
+func (e GetAvailableModelsByTypeCodeValidationError) ToPointer() *GetAvailableModelsByTypeCodeValidationError {
+	return &e
+}
+func (e *GetAvailableModelsByTypeCodeValidationError) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "VALIDATION_ERROR":
+		*e = GetAvailableModelsByTypeCodeValidationError(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetAvailableModelsByTypeCodeValidationError: %v", v)
+	}
+}
+
+// MetadataCode - Machine-readable error code mapped from the Zod issue code.
+type MetadataCode string
+
+const (
+	MetadataCodeInvalidType          MetadataCode = "INVALID_TYPE"
+	MetadataCodeInvalidLiteral       MetadataCode = "INVALID_LITERAL"
+	MetadataCodeInvalidEnum          MetadataCode = "INVALID_ENUM"
+	MetadataCodeInvalidUnion         MetadataCode = "INVALID_UNION"
+	MetadataCodeInvalidDiscriminator MetadataCode = "INVALID_DISCRIMINATOR"
+	MetadataCodeInvalidArguments     MetadataCode = "INVALID_ARGUMENTS"
+	MetadataCodeTooSmall             MetadataCode = "TOO_SMALL"
+	MetadataCodeTooBig               MetadataCode = "TOO_BIG"
+)
+
+func (e MetadataCode) ToPointer() *MetadataCode {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *MetadataCode) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "INVALID_TYPE", "INVALID_LITERAL", "INVALID_ENUM", "INVALID_UNION", "INVALID_DISCRIMINATOR", "INVALID_ARGUMENTS", "TOO_SMALL", "TOO_BIG":
+			return true
+		}
+	}
+	return false
+}
+
+type MetadataError struct {
+	// Dot-separated path to the failing field within the request (params, body, query).
+	Field string `json:"field"`
+	// Human-readable Zod validation message.
+	Message string `json:"message"`
+	// Machine-readable error code mapped from the Zod issue code.
+	Code MetadataCode `json:"code"`
+	// The rejected value stringified. May be an empty string when the value is not easily serialisable.
+	Value string `json:"value"`
+}
+
+func (m *MetadataError) GetField() string {
+	if m == nil {
+		return ""
+	}
+	return m.Field
+}
+
+func (m *MetadataError) GetMessage() string {
+	if m == nil {
+		return ""
+	}
+	return m.Message
+}
+
+func (m *MetadataError) GetCode() MetadataCode {
+	if m == nil {
+		return MetadataCode("")
+	}
+	return m.Code
+}
+
+func (m *MetadataError) GetValue() string {
+	if m == nil {
+		return ""
+	}
+	return m.Value
+}
+
+// GetAvailableModelsByTypeMetadata - Per-field validation detail from Zod.
+type GetAvailableModelsByTypeMetadata struct {
+	Errors []MetadataError `json:"errors"`
+}
+
+func (g *GetAvailableModelsByTypeMetadata) GetErrors() []MetadataError {
+	if g == nil {
+		return []MetadataError{}
+	}
+	return g.Errors
+}
+
+type GetAvailableModelsByTypeErrorValidationError struct {
+	Code    GetAvailableModelsByTypeCodeValidationError `json:"code"`
+	Message string                                      `json:"message"`
+	// Per-field validation detail from Zod.
+	Metadata GetAvailableModelsByTypeMetadata `json:"metadata"`
+}
+
+func (g *GetAvailableModelsByTypeErrorValidationError) GetCode() GetAvailableModelsByTypeCodeValidationError {
+	if g == nil {
+		return GetAvailableModelsByTypeCodeValidationError("")
+	}
+	return g.Code
+}
+
+func (g *GetAvailableModelsByTypeErrorValidationError) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
+}
+
+func (g *GetAvailableModelsByTypeErrorValidationError) GetMetadata() GetAvailableModelsByTypeMetadata {
+	if g == nil {
+		return GetAvailableModelsByTypeMetadata{}
+	}
+	return g.Metadata
+}
+
+type GetAvailableModelsByTypeStatus string
+
+const (
+	GetAvailableModelsByTypeStatusSuccess GetAvailableModelsByTypeStatus = "success"
+)
+
+func (e GetAvailableModelsByTypeStatus) ToPointer() *GetAvailableModelsByTypeStatus {
+	return &e
+}
+func (e *GetAvailableModelsByTypeStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "success":
+		*e = GetAvailableModelsByTypeStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetAvailableModelsByTypeStatus: %v", v)
+	}
+}
+
+type Model struct {
+	// Model category — always matches the `{modelType}` path parameter.
+	ModelType components.ModelType `json:"modelType"`
+	// Provider identifier as stored in configuration (e.g. `openAI`, `azureOpenAI`, `anthropic`, `gemini`, `ollama`).
+	Provider string `json:"provider"`
+	// Specific model name/identifier forwarded to the provider API when making inference calls.
+	ModelName string `json:"modelName"`
+	// UUID that uniquely identifies the provider configuration entry this model was expanded from. Use this key when calling update/delete endpoints.
+	ModelKey string `json:"modelKey"`
+	// `true` when this model accepts multi-modal inputs (text + images). Always present; defaults to `false` when not explicitly set.
+	IsMultimodal bool `json:"isMultimodal"`
+	// `true` when this is a reasoning / chain-of-thought model. Always present; defaults to `false` when not explicitly set.
+	IsReasoning bool `json:"isReasoning"`
+	// `true` for the first model in the provider entry that was marked as default. At most one entry per `modelType` will have this set to `true`.
+	IsDefault bool `json:"isDefault"`
+	// Optional human-readable display name. Only present when the provider configuration entry contains exactly one model name (not a comma-separated list) **and** a friendly name was added during configuration.
+	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
+}
+
+func (m *Model) GetModelType() components.ModelType {
+	if m == nil {
+		return components.ModelType("")
+	}
+	return m.ModelType
+}
+
+func (m *Model) GetProvider() string {
+	if m == nil {
+		return ""
+	}
+	return m.Provider
+}
+
+func (m *Model) GetModelName() string {
+	if m == nil {
+		return ""
+	}
+	return m.ModelName
+}
+
+func (m *Model) GetModelKey() string {
+	if m == nil {
+		return ""
+	}
+	return m.ModelKey
+}
+
+func (m *Model) GetIsMultimodal() bool {
+	if m == nil {
+		return false
+	}
+	return m.IsMultimodal
+}
+
+func (m *Model) GetIsReasoning() bool {
+	if m == nil {
+		return false
+	}
+	return m.IsReasoning
+}
+
+func (m *Model) GetIsDefault() bool {
+	if m == nil {
+		return false
+	}
+	return m.IsDefault
+}
+
+func (m *Model) GetModelFriendlyName() *string {
+	if m == nil {
+		return nil
+	}
+	return m.ModelFriendlyName
+}
+
+// GetAvailableModelsByTypeResponseBody - Available models retrieved successfully.
+//
+// An empty `models` array (with HTTP 200) is returned when no providers of
+// the requested type have been configured — treat this as a valid, empty
+// state, not an error.
+type GetAvailableModelsByTypeResponseBody struct {
+	Status GetAvailableModelsByTypeStatus `json:"status"`
+	// Human-readable summary. Two formats are possible:
+	// - `"Found {n} {modelType} models"` — the `modelType` key
+	//   exists in the stored config (returned even when `n` is 0,
+	//   e.g. `"Found 0 ocr models"`).
+	//
+	// - `"No {modelType} models found"` — no AI config has been
+	//   stored yet, or the `modelType` key is absent from the
+	//   stored config entirely.
+	Message string `json:"message"`
+	// Flat list of individual model entries. Each entry represents one model name from one provider configuration.
+	Models []Model `json:"models"`
+}
+
+func (g *GetAvailableModelsByTypeResponseBody) GetStatus() GetAvailableModelsByTypeStatus {
+	if g == nil {
+		return GetAvailableModelsByTypeStatus("")
+	}
+	return g.Status
+}
+
+func (g *GetAvailableModelsByTypeResponseBody) GetMessage() string {
+	if g == nil {
+		return ""
+	}
+	return g.Message
+}
+
+func (g *GetAvailableModelsByTypeResponseBody) GetModels() []Model {
+	if g == nil {
+		return []Model{}
+	}
+	return g.Models
+}
+
+type GetAvailableModelsByTypeResponse struct {
+	HTTPMeta components.HTTPMetadata `json:"-"`
+	// Available models retrieved successfully.
+	//
+	// An empty `models` array (with HTTP 200) is returned when no providers of
+	// the requested type have been configured — treat this as a valid, empty
+	// state, not an error.
+	//
+	Object *GetAvailableModelsByTypeResponseBody
+}
+
+func (g GetAvailableModelsByTypeResponse) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAvailableModelsByTypeResponse) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAvailableModelsByTypeResponse) GetHTTPMeta() components.HTTPMetadata {
+	if g == nil {
+		return components.HTTPMetadata{}
+	}
+	return g.HTTPMeta
+}
+
+func (g *GetAvailableModelsByTypeResponse) GetObject() *GetAvailableModelsByTypeResponseBody {
 	if g == nil {
 		return nil
 	}

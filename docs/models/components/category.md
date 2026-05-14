@@ -3,13 +3,14 @@
 
 ## Values
 
-| Name                           | Value                          |
-| ------------------------------ | ------------------------------ |
-| `CategoryIncorrectInformation` | incorrect_information          |
-| `CategoryMissingInformation`   | missing_information            |
-| `CategoryOutdatedInformation`  | outdated_information           |
-| `CategoryIrrelevantResponse`   | irrelevant_response            |
-| `CategoryTooVerbose`           | too_verbose                    |
-| `CategoryTooBrief`             | too_brief                      |
-| `CategoryFormattingIssues`     | formatting_issues              |
-| `CategoryCitationIssues`       | citation_issues                |
+| Name                            | Value                           |
+| ------------------------------- | ------------------------------- |
+| `CategoryIncorrectInformation`  | incorrect_information           |
+| `CategoryMissingInformation`    | missing_information             |
+| `CategoryIrrelevantInformation` | irrelevant_information          |
+| `CategoryUnclearExplanation`    | unclear_explanation             |
+| `CategoryPoorCitations`         | poor_citations                  |
+| `CategoryExcellentAnswer`       | excellent_answer                |
+| `CategoryHelpfulCitations`      | helpful_citations               |
+| `CategoryWellExplained`         | well_explained                  |
+| `CategoryOther`                 | other                           |

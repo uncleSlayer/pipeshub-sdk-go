@@ -6,21 +6,30 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
-// SemanticSearchRequest - Request body for performing semantic search across the enterprise knowledge base.<br><br>
-// <b>How Semantic Search Works:</b><br>
-// <ol>
-// <li>Query is converted to vector embeddings</li>
-// <li>Similar content is found using vector similarity</li>
-// <li>Results are ranked by relevance score</li>
-// <li>Matching chunks with metadata are returned</li>
-// </ol>
-// <b>Filtering:</b><br>
+// SemanticSearchRequest - Request body for performing semantic search across the enterprise knowledge base.
+//
+// **How Semantic Search Works:**
+//
+// 1. Query is converted to vector embeddings
+// 2. Similar content is found using vector similarity
+// 3. Results are ranked by relevance score
+// 4. Matching chunks with metadata are returned
+//
+// **Filtering:**
+//
 // Use filters to narrow search scope to specific apps or knowledge bases.
 type SemanticSearchRequest struct {
 	// Natural language search query. The system understands
 	// semantic meaning, not just keywords.
 	//
-	Query   string   `json:"query"`
+	Query string `json:"query"`
+	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
+	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
+	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
+	// to let the service use the agent’s stored knowledge and tool configuration. Sending
+	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
+	// turn (it is not “full org default”).
+	//
 	Filters *Filters `json:"filters,omitzero"`
 	// Maximum number of results to return
 	Limit *int64 `default:"10" json:"limit"`
@@ -28,6 +37,8 @@ type SemanticSearchRequest struct {
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the model
 	ModelName *string `json:"modelName,omitzero"`
+	// Friendly display name of the model
+	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Processing mode configuration
 	ChatMode *string `json:"chatMode,omitzero"`
 }
@@ -76,6 +87,13 @@ func (s *SemanticSearchRequest) GetModelName() *string {
 		return nil
 	}
 	return s.ModelName
+}
+
+func (s *SemanticSearchRequest) GetModelFriendlyName() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ModelFriendlyName
 }
 
 func (s *SemanticSearchRequest) GetChatMode() *string {

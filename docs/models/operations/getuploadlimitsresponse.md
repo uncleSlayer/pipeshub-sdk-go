@@ -1,9 +1,0 @@
-# GetUploadLimitsResponse
-
-
-## Fields
-
-| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                | :heavy_check_mark:                                                                                | N/A                                                                                               |
-| `Object`                                                                                          | [*operations.GetUploadLimitsResponseBody](../../models/operations/getuploadlimitsresponsebody.md) | :heavy_minus_sign:                                                                                | Upload limits retrieved                                                                           |

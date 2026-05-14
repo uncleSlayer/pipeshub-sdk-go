@@ -3,8 +3,11 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"time"
 )
 
 type DeleteConversationByIDRequest struct {
@@ -19,16 +22,137 @@ func (d *DeleteConversationByIDRequest) GetConversationID() string {
 	return d.ConversationID
 }
 
-// DeleteConversationByIDResponseBody - Conversation deleted successfully
-type DeleteConversationByIDResponseBody struct {
-	Message *string `json:"message,omitzero"`
+// DeleteConversationByIDStatus - Outcome of the operation
+type DeleteConversationByIDStatus string
+
+const (
+	DeleteConversationByIDStatusDeleted DeleteConversationByIDStatus = "deleted"
+)
+
+func (e DeleteConversationByIDStatus) ToPointer() *DeleteConversationByIDStatus {
+	return &e
+}
+func (e *DeleteConversationByIDStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "deleted":
+		*e = DeleteConversationByIDStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for DeleteConversationByIDStatus: %v", v)
+	}
 }
 
-func (d *DeleteConversationByIDResponseBody) GetMessage() *string {
+type DeleteConversationByIDMeta struct {
+	// Server-assigned identifier for the request
+	RequestID *string `json:"requestId,omitzero"`
+	// Server time the response was produced
+	Timestamp *time.Time `json:"timestamp,omitzero"`
+	// Server processing time in milliseconds
+	Duration *int64 `json:"duration,omitzero"`
+}
+
+func (d DeleteConversationByIDMeta) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
+}
+
+func (d *DeleteConversationByIDMeta) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *DeleteConversationByIDMeta) GetRequestID() *string {
 	if d == nil {
 		return nil
 	}
-	return d.Message
+	return d.RequestID
+}
+
+func (d *DeleteConversationByIDMeta) GetTimestamp() *time.Time {
+	if d == nil {
+		return nil
+	}
+	return d.Timestamp
+}
+
+func (d *DeleteConversationByIDMeta) GetDuration() *int64 {
+	if d == nil {
+		return nil
+	}
+	return d.Duration
+}
+
+// DeleteConversationByIDResponseBody - Conversation deleted successfully
+type DeleteConversationByIDResponseBody struct {
+	// Identifier of the conversation that was deleted
+	ID *string `json:"id,omitzero"`
+	// Outcome of the operation
+	Status *DeleteConversationByIDStatus `json:"status,omitzero"`
+	// Timestamp when the conversation was marked deleted
+	DeletedAt *time.Time `json:"deletedAt,omitzero"`
+	// Identifier of the user who performed the delete
+	DeletedBy *string `json:"deletedBy,omitzero"`
+	// Number of citations soft-deleted alongside the conversation
+	CitationsDeleted *int64                      `json:"citationsDeleted,omitzero"`
+	Meta             *DeleteConversationByIDMeta `json:"meta,omitzero"`
+}
+
+func (d DeleteConversationByIDResponseBody) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
+}
+
+func (d *DeleteConversationByIDResponseBody) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *DeleteConversationByIDResponseBody) GetID() *string {
+	if d == nil {
+		return nil
+	}
+	return d.ID
+}
+
+func (d *DeleteConversationByIDResponseBody) GetStatus() *DeleteConversationByIDStatus {
+	if d == nil {
+		return nil
+	}
+	return d.Status
+}
+
+func (d *DeleteConversationByIDResponseBody) GetDeletedAt() *time.Time {
+	if d == nil {
+		return nil
+	}
+	return d.DeletedAt
+}
+
+func (d *DeleteConversationByIDResponseBody) GetDeletedBy() *string {
+	if d == nil {
+		return nil
+	}
+	return d.DeletedBy
+}
+
+func (d *DeleteConversationByIDResponseBody) GetCitationsDeleted() *int64 {
+	if d == nil {
+		return nil
+	}
+	return d.CitationsDeleted
+}
+
+func (d *DeleteConversationByIDResponseBody) GetMeta() *DeleteConversationByIDMeta {
+	if d == nil {
+		return nil
+	}
+	return d.Meta
 }
 
 type DeleteConversationByIDResponse struct {

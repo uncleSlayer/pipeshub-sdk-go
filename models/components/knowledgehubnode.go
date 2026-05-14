@@ -2,79 +2,146 @@
 
 package components
 
-import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-)
-
-type KnowledgeHubNodeType string
+// NodeType - Type of the node.
+type NodeType string
 
 const (
-	KnowledgeHubNodeTypeKb        KnowledgeHubNodeType = "KB"
-	KnowledgeHubNodeTypeFolder    KnowledgeHubNodeType = "FOLDER"
-	KnowledgeHubNodeTypeRecord    KnowledgeHubNodeType = "RECORD"
-	KnowledgeHubNodeTypeConnector KnowledgeHubNodeType = "CONNECTOR"
-	KnowledgeHubNodeTypeApp       KnowledgeHubNodeType = "APP"
+	NodeTypeApp         NodeType = "app"
+	NodeTypeRecordGroup NodeType = "recordGroup"
+	NodeTypeFolder      NodeType = "folder"
+	NodeTypeRecord      NodeType = "record"
 )
 
-func (e KnowledgeHubNodeType) ToPointer() *KnowledgeHubNodeType {
+func (e NodeType) ToPointer() *NodeType {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *KnowledgeHubNodeType) IsExact() bool {
+func (e *NodeType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "KB", "FOLDER", "RECORD", "CONNECTOR", "APP":
+		case "app", "recordGroup", "folder", "record":
 			return true
 		}
 	}
 	return false
 }
 
-type KnowledgeHubNodeMetadata struct {
+// Origin type.
+type Origin string
+
+const (
+	OriginCollection Origin = "COLLECTION"
+	OriginConnector  Origin = "CONNECTOR"
+)
+
+func (e Origin) ToPointer() *Origin {
+	return &e
 }
 
-// KnowledgeHubNode - A node in the knowledge hub tree structure
-type KnowledgeHubNode struct {
-	ID          *string                   `json:"id,omitzero"`
-	Name        *string                   `json:"name,omitzero"`
-	Type        *KnowledgeHubNodeType     `json:"type,omitzero"`
-	ParentID    *string                   `json:"parentId,omitzero"`
-	HasChildren *bool                     `json:"hasChildren,omitzero"`
-	ChildCount  *int64                    `json:"childCount,omitzero"`
-	Metadata    *KnowledgeHubNodeMetadata `json:"metadata,omitzero"`
-}
-
-func (k KnowledgeHubNode) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(k, "", false)
-}
-
-func (k *KnowledgeHubNode) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &k, "", false, nil); err != nil {
-		return err
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *Origin) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "COLLECTION", "CONNECTOR":
+			return true
+		}
 	}
-	return nil
+	return false
 }
 
-func (k *KnowledgeHubNode) GetID() *string {
+// Permission - Per-item permission when `include=permissions` is requested; otherwise `null`.
+type Permission struct {
+	Role      string `json:"role"`
+	CanEdit   bool   `json:"canEdit"`
+	CanDelete bool   `json:"canDelete"`
+}
+
+func (p *Permission) GetRole() string {
+	if p == nil {
+		return ""
+	}
+	return p.Role
+}
+
+func (p *Permission) GetCanEdit() bool {
+	if p == nil {
+		return false
+	}
+	return p.CanEdit
+}
+
+func (p *Permission) GetCanDelete() bool {
+	if p == nil {
+		return false
+	}
+	return p.CanDelete
+}
+
+// KnowledgeHubNode - One element of `items`. The live API keeps keys stable and sets
+// inapplicable values to JSON `null` (not omitted).
+type KnowledgeHubNode struct {
+	// Unique identifier for the node.
+	ID string `json:"id"`
+	// Display name of the node.
+	Name string `json:"name"`
+	// Type of the node.
+	NodeType NodeType `json:"nodeType"`
+	// Parent node ID, or `null` at the root browse level.
+	ParentID *string `json:"parentId"`
+	// Origin type.
+	Origin Origin `json:"origin"`
+	// Connector display name / key when applicable; otherwise `null`.
+	Connector *string `json:"connector"`
+	// Record type when `nodeType` is `record`; otherwise `null`.
+	RecordType *string `json:"recordType"`
+	// Record group type when `nodeType` is `recordGroup`; otherwise `null`.
+	RecordGroupType *string `json:"recordGroupType"`
+	// Indexing status when `nodeType` is `record`; otherwise `null`.
+	IndexingStatus *string `json:"indexingStatus"`
+	// Failure or status reason when set; otherwise `null`.
+	Reason *string `json:"reason"`
+	// True for internal/system nodes that do not originate from a source.
+	IsInternal bool `json:"isInternal"`
+	// Creation timestamp (epoch ms).
+	CreatedAt int64 `json:"createdAt"`
+	// Update timestamp (epoch ms).
+	UpdatedAt int64 `json:"updatedAt"`
+	// File size in bytes for file records; otherwise `null`.
+	SizeInBytes *int64  `json:"sizeInBytes"`
+	MimeType    *string `json:"mimeType"`
+	Extension   *string `json:"extension"`
+	WebURL      *string `json:"webUrl"`
+	// Whether the node has children (sidebar / tree).
+	HasChildren       bool  `json:"hasChildren"`
+	PreviewRenderable *bool `json:"previewRenderable"`
+	// Per-item permission when `include=permissions` is requested; otherwise `null`.
+	Permission *Permission `json:"permission"`
+	// Sharing status (e.g. `private`, `shared`, `team`, `workspace`) when
+	// applicable; otherwise `null`.
+	//
+	SharingStatus *string `json:"sharingStatus"`
+}
+
+func (k *KnowledgeHubNode) GetID() string {
 	if k == nil {
-		return nil
+		return ""
 	}
 	return k.ID
 }
 
-func (k *KnowledgeHubNode) GetName() *string {
+func (k *KnowledgeHubNode) GetName() string {
 	if k == nil {
-		return nil
+		return ""
 	}
 	return k.Name
 }
 
-func (k *KnowledgeHubNode) GetType() *KnowledgeHubNodeType {
+func (k *KnowledgeHubNode) GetNodeType() NodeType {
 	if k == nil {
-		return nil
+		return NodeType("")
 	}
-	return k.Type
+	return k.NodeType
 }
 
 func (k *KnowledgeHubNode) GetParentID() *string {
@@ -84,23 +151,121 @@ func (k *KnowledgeHubNode) GetParentID() *string {
 	return k.ParentID
 }
 
-func (k *KnowledgeHubNode) GetHasChildren() *bool {
+func (k *KnowledgeHubNode) GetOrigin() Origin {
+	if k == nil {
+		return Origin("")
+	}
+	return k.Origin
+}
+
+func (k *KnowledgeHubNode) GetConnector() *string {
 	if k == nil {
 		return nil
+	}
+	return k.Connector
+}
+
+func (k *KnowledgeHubNode) GetRecordType() *string {
+	if k == nil {
+		return nil
+	}
+	return k.RecordType
+}
+
+func (k *KnowledgeHubNode) GetRecordGroupType() *string {
+	if k == nil {
+		return nil
+	}
+	return k.RecordGroupType
+}
+
+func (k *KnowledgeHubNode) GetIndexingStatus() *string {
+	if k == nil {
+		return nil
+	}
+	return k.IndexingStatus
+}
+
+func (k *KnowledgeHubNode) GetReason() *string {
+	if k == nil {
+		return nil
+	}
+	return k.Reason
+}
+
+func (k *KnowledgeHubNode) GetIsInternal() bool {
+	if k == nil {
+		return false
+	}
+	return k.IsInternal
+}
+
+func (k *KnowledgeHubNode) GetCreatedAt() int64 {
+	if k == nil {
+		return 0
+	}
+	return k.CreatedAt
+}
+
+func (k *KnowledgeHubNode) GetUpdatedAt() int64 {
+	if k == nil {
+		return 0
+	}
+	return k.UpdatedAt
+}
+
+func (k *KnowledgeHubNode) GetSizeInBytes() *int64 {
+	if k == nil {
+		return nil
+	}
+	return k.SizeInBytes
+}
+
+func (k *KnowledgeHubNode) GetMimeType() *string {
+	if k == nil {
+		return nil
+	}
+	return k.MimeType
+}
+
+func (k *KnowledgeHubNode) GetExtension() *string {
+	if k == nil {
+		return nil
+	}
+	return k.Extension
+}
+
+func (k *KnowledgeHubNode) GetWebURL() *string {
+	if k == nil {
+		return nil
+	}
+	return k.WebURL
+}
+
+func (k *KnowledgeHubNode) GetHasChildren() bool {
+	if k == nil {
+		return false
 	}
 	return k.HasChildren
 }
 
-func (k *KnowledgeHubNode) GetChildCount() *int64 {
+func (k *KnowledgeHubNode) GetPreviewRenderable() *bool {
 	if k == nil {
 		return nil
 	}
-	return k.ChildCount
+	return k.PreviewRenderable
 }
 
-func (k *KnowledgeHubNode) GetMetadata() *KnowledgeHubNodeMetadata {
+func (k *KnowledgeHubNode) GetPermission() *Permission {
 	if k == nil {
 		return nil
 	}
-	return k.Metadata
+	return k.Permission
+}
+
+func (k *KnowledgeHubNode) GetSharingStatus() *string {
+	if k == nil {
+		return nil
+	}
+	return k.SharingStatus
 }
