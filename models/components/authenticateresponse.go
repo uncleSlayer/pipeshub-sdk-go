@@ -4,137 +4,123 @@ package components
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
-// AuthenticateResponseStatus - Authentication step status (for multi-step auth)
-type AuthenticateResponseStatus string
+type AuthenticateResponseType string
 
 const (
-	AuthenticateResponseStatusSuccess AuthenticateResponseStatus = "success"
+	AuthenticateResponseTypeAuthenticateMultiStepResponse AuthenticateResponseType = "AuthenticateMultiStepResponse"
+	AuthenticateResponseTypeAuthenticateFinalResponse     AuthenticateResponseType = "AuthenticateFinalResponse"
+	AuthenticateResponseTypeUnknown                       AuthenticateResponseType = "Unknown"
 )
 
-func (e AuthenticateResponseStatus) ToPointer() *AuthenticateResponseStatus {
-	return &e
-}
-func (e *AuthenticateResponseStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "success":
-		*e = AuthenticateResponseStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for AuthenticateResponseStatus: %v", v)
-	}
-}
-
-type AuthenticateResponseAllowedMethod string
-
-const (
-	AuthenticateResponseAllowedMethodSamlSso   AuthenticateResponseAllowedMethod = "samlSso"
-	AuthenticateResponseAllowedMethodOtp       AuthenticateResponseAllowedMethod = "otp"
-	AuthenticateResponseAllowedMethodPassword  AuthenticateResponseAllowedMethod = "password"
-	AuthenticateResponseAllowedMethodGoogle    AuthenticateResponseAllowedMethod = "google"
-	AuthenticateResponseAllowedMethodMicrosoft AuthenticateResponseAllowedMethod = "microsoft"
-	AuthenticateResponseAllowedMethodAzureAd   AuthenticateResponseAllowedMethod = "azureAd"
-	AuthenticateResponseAllowedMethodOauth     AuthenticateResponseAllowedMethod = "oauth"
-)
-
-func (e AuthenticateResponseAllowedMethod) ToPointer() *AuthenticateResponseAllowedMethod {
-	return &e
-}
-
-// IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *AuthenticateResponseAllowedMethod) IsExact() bool {
-	if e != nil {
-		switch *e {
-		case "samlSso", "otp", "password", "google", "microsoft", "azureAd", "oauth":
-			return true
-		}
-	}
-	return false
-}
-
-// AuthenticateResponse - Authentication response. Two possible outcomes:
-// 1. **Multi-step in progress**: Returns `status: "success"` with `nextStep` and `allowedMethods`
-// 2. **Fully authenticated**: Returns `message: "Fully authenticated"` with `accessToken` and `refreshToken`
+// AuthenticateResponse - Either the next step in a multi-factor flow (`status`, `nextStep`, `allowedMethods`, `authProviders`)
+// or final tokens (`message`, `accessToken`, `refreshToken`).
 type AuthenticateResponse struct {
-	// Authentication step status (for multi-step auth)
-	Status *AuthenticateResponseStatus `json:"status,omitzero"`
-	// Response message (e.g., "Fully authenticated")
-	Message *string `json:"message,omitzero"`
-	// Next authentication step number (if multi-step auth continues)
-	NextStep *int64 `json:"nextStep,omitzero"`
-	// Allowed methods for next step (if multi-step auth continues)
-	AllowedMethods []AuthenticateResponseAllowedMethod `json:"allowedMethods,omitzero"`
-	// Configuration for external authentication providers (returned when those methods are allowed)
-	AuthProviders *AuthProviders `json:"authProviders,omitzero"`
-	// JWT access token (1 hour expiry). Only returned when fully authenticated.
-	AccessToken *string `json:"accessToken,omitzero"`
-	// JWT refresh token (7 days expiry). Only returned when fully authenticated.
-	RefreshToken *string `json:"refreshToken,omitzero"`
+	AuthenticateMultiStepResponse *AuthenticateMultiStepResponse `queryParam:"inline" union:"member"`
+	AuthenticateFinalResponse     *AuthenticateFinalResponse     `queryParam:"inline" union:"member"`
+	UnknownRaw                    json.RawMessage                `json:"-" union:"unknown"`
+
+	Type AuthenticateResponseType
 }
 
-func (a AuthenticateResponse) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(a, "", false)
-}
+func CreateAuthenticateResponseAuthenticateMultiStepResponse(authenticateMultiStepResponse AuthenticateMultiStepResponse) AuthenticateResponse {
+	typ := AuthenticateResponseTypeAuthenticateMultiStepResponse
 
-func (a *AuthenticateResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
-		return err
+	return AuthenticateResponse{
+		AuthenticateMultiStepResponse: &authenticateMultiStepResponse,
+		Type:                          typ,
 	}
+}
+
+func CreateAuthenticateResponseAuthenticateFinalResponse(authenticateFinalResponse AuthenticateFinalResponse) AuthenticateResponse {
+	typ := AuthenticateResponseTypeAuthenticateFinalResponse
+
+	return AuthenticateResponse{
+		AuthenticateFinalResponse: &authenticateFinalResponse,
+		Type:                      typ,
+	}
+}
+
+func CreateAuthenticateResponseUnknown(raw json.RawMessage) AuthenticateResponse {
+	return AuthenticateResponse{
+		UnknownRaw: raw,
+		Type:       AuthenticateResponseTypeUnknown,
+	}
+}
+
+func (u AuthenticateResponse) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u AuthenticateResponse) IsUnknown() bool {
+	return u.Type == AuthenticateResponseTypeUnknown
+}
+
+func (u *AuthenticateResponse) UnmarshalJSON(data []byte) error {
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var authenticateMultiStepResponse AuthenticateMultiStepResponse = AuthenticateMultiStepResponse{}
+	if err := utils.UnmarshalJSON(data, &authenticateMultiStepResponse, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AuthenticateResponseTypeAuthenticateMultiStepResponse,
+			Value: &authenticateMultiStepResponse,
+		})
+	}
+
+	var authenticateFinalResponse AuthenticateFinalResponse = AuthenticateFinalResponse{}
+	if err := utils.UnmarshalJSON(data, &authenticateFinalResponse, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AuthenticateResponseTypeAuthenticateFinalResponse,
+			Value: &authenticateFinalResponse,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AuthenticateResponseTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AuthenticateResponseTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(AuthenticateResponseType)
+	switch best.Type {
+	case AuthenticateResponseTypeAuthenticateMultiStepResponse:
+		u.AuthenticateMultiStepResponse = best.Value.(*AuthenticateMultiStepResponse)
+		return nil
+	case AuthenticateResponseTypeAuthenticateFinalResponse:
+		u.AuthenticateFinalResponse = best.Value.(*AuthenticateFinalResponse)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = AuthenticateResponseTypeUnknown
 	return nil
 }
 
-func (a *AuthenticateResponse) GetStatus() *AuthenticateResponseStatus {
-	if a == nil {
-		return nil
+func (u AuthenticateResponse) MarshalJSON() ([]byte, error) {
+	if u.AuthenticateMultiStepResponse != nil {
+		return utils.MarshalJSON(u.AuthenticateMultiStepResponse, "", true)
 	}
-	return a.Status
-}
 
-func (a *AuthenticateResponse) GetMessage() *string {
-	if a == nil {
-		return nil
+	if u.AuthenticateFinalResponse != nil {
+		return utils.MarshalJSON(u.AuthenticateFinalResponse, "", true)
 	}
-	return a.Message
-}
 
-func (a *AuthenticateResponse) GetNextStep() *int64 {
-	if a == nil {
-		return nil
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
 	}
-	return a.NextStep
-}
-
-func (a *AuthenticateResponse) GetAllowedMethods() []AuthenticateResponseAllowedMethod {
-	if a == nil {
-		return nil
-	}
-	return a.AllowedMethods
-}
-
-func (a *AuthenticateResponse) GetAuthProviders() *AuthProviders {
-	if a == nil {
-		return nil
-	}
-	return a.AuthProviders
-}
-
-func (a *AuthenticateResponse) GetAccessToken() *string {
-	if a == nil {
-		return nil
-	}
-	return a.AccessToken
-}
-
-func (a *AuthenticateResponse) GetRefreshToken() *string {
-	if a == nil {
-		return nil
-	}
-	return a.RefreshToken
+	return nil, errors.New("could not marshal union type AuthenticateResponse: all fields are null")
 }

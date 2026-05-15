@@ -1,19 +1,35 @@
 # AuthenticateResponse
 
-Authentication response. Two possible outcomes:
-1. **Multi-step in progress**: Returns `status: "success"` with `nextStep` and `allowedMethods`
-2. **Fully authenticated**: Returns `message: "Fully authenticated"` with `accessToken` and `refreshToken`
+Either the next step in a multi-factor flow (`status`, `nextStep`, `allowedMethods`, `authProviders`)
+or final tokens (`message`, `accessToken`, `refreshToken`).
 
 
 
-## Fields
+## Supported Types
 
-| Field                                                                                                          | Type                                                                                                           | Required                                                                                                       | Description                                                                                                    | Example                                                                                                        |
-| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `Status`                                                                                                       | [*components.AuthenticateResponseStatus](../../models/components/authenticateresponsestatus.md)                | :heavy_minus_sign:                                                                                             | Authentication step status (for multi-step auth)                                                               |                                                                                                                |
-| `Message`                                                                                                      | **string*                                                                                                      | :heavy_minus_sign:                                                                                             | Response message (e.g., "Fully authenticated")                                                                 | Fully authenticated                                                                                            |
-| `NextStep`                                                                                                     | **int64*                                                                                                       | :heavy_minus_sign:                                                                                             | Next authentication step number (if multi-step auth continues)                                                 |                                                                                                                |
-| `AllowedMethods`                                                                                               | [][components.AuthenticateResponseAllowedMethod](../../models/components/authenticateresponseallowedmethod.md) | :heavy_minus_sign:                                                                                             | Allowed methods for next step (if multi-step auth continues)                                                   |                                                                                                                |
-| `AuthProviders`                                                                                                | [*components.AuthProviders](../../models/components/authproviders.md)                                          | :heavy_minus_sign:                                                                                             | Configuration for external authentication providers (returned when those methods are allowed)                  |                                                                                                                |
-| `AccessToken`                                                                                                  | **string*                                                                                                      | :heavy_minus_sign:                                                                                             | JWT access token (1 hour expiry). Only returned when fully authenticated.                                      |                                                                                                                |
-| `RefreshToken`                                                                                                 | **string*                                                                                                      | :heavy_minus_sign:                                                                                             | JWT refresh token (7 days expiry). Only returned when fully authenticated.                                     |                                                                                                                |
+### AuthenticateMultiStepResponse
+
+```go
+authenticateResponse := components.CreateAuthenticateResponseAuthenticateMultiStepResponse(components.AuthenticateMultiStepResponse{/* values here */})
+```
+
+### AuthenticateFinalResponse
+
+```go
+authenticateResponse := components.CreateAuthenticateResponseAuthenticateFinalResponse(components.AuthenticateFinalResponse{/* values here */})
+```
+
+## Union Discrimination
+
+Use the `Type` field to determine which variant is active, then access the corresponding field:
+
+```go
+switch authenticateResponse.Type {
+	case components.AuthenticateResponseTypeAuthenticateMultiStepResponse:
+		// authenticateResponse.AuthenticateMultiStepResponse is populated
+	case components.AuthenticateResponseTypeAuthenticateFinalResponse:
+		// authenticateResponse.AuthenticateFinalResponse is populated
+	default:
+		// Unknown type - use authenticateResponse.GetUnknownRaw() for raw JSON
+}
+```

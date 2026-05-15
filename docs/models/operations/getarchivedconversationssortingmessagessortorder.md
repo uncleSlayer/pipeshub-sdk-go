@@ -1,0 +1,11 @@
+# GetArchivedConversationsSortingMessagesSortOrder
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Values`                                                                                | [][operations.SortingMessagesValue](../../models/operations/sortingmessagesvalue.md)    | :heavy_minus_sign:                                                                      | N/A                                                                                     |
+| `Default`                                                                               | [*operations.SortingMessagesDefault](../../models/operations/sortingmessagesdefault.md) | :heavy_minus_sign:                                                                      | N/A                                                                                     |
+| `Description`                                                                           | **string*                                                                               | :heavy_minus_sign:                                                                      | N/A                                                                                     |
+| `Current`                                                                               | [*operations.SortingMessagesCurrent](../../models/operations/sortingmessagescurrent.md) | :heavy_minus_sign:                                                                      | N/A                                                                                     |

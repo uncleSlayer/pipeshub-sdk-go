@@ -1,9 +1,0 @@
-# UploadRecordsToKBRequest
-
-
-## Fields
-
-| Field                                                                                              | Type                                                                                               | Required                                                                                           | Description                                                                                        |
-| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `KbID`                                                                                             | *string*                                                                                           | :heavy_check_mark:                                                                                 | Knowledge base ID                                                                                  |
-| `Body`                                                                                             | [operations.UploadRecordsToKBRequestBody](../../models/operations/uploadrecordstokbrequestbody.md) | :heavy_check_mark:                                                                                 | Request payload                                                                                    |

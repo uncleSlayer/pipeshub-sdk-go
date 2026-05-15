@@ -33,14 +33,16 @@ func newOrganizationAuthConfig(rootSDK *Pipeshub, sdkConfig config.SDKConfigurat
 
 // GetAuthMethods - Get organization authentication methods
 // Retrieve the configured authentication methods for the organization.
-// <br><br>
-// <b>Response Structure:</b><br>
-// Returns an array of authentication steps, each containing:<br>
-// - <code>order</code>: Step number (1-3)<br>
-// - <code>allowedMethods</code>: Array of methods allowed for that step
-// <br><br>
-// <b>Example Response:</b><br>
-// <pre>
+//
+// **Response Structure:**
+//
+// Returns an array of authentication steps, each containing:
+// - `order`: Step number (1-3)
+// - `allowedMethods`: Array of methods allowed for that step
+//
+// **Example Response:**
+//
+// ```json
 //
 //	{
 //	  "authMethods": [
@@ -49,9 +51,9 @@ func newOrganizationAuthConfig(rootSDK *Pipeshub, sdkConfig config.SDKConfigurat
 //	  ]
 //	}
 //
-// </pre>
-// <br>
-// <b>Admin Access Required:</b> Only organization admins can view auth configuration.
+// ```
+//
+// **Admin Access Required:** Only organization admins can view auth configuration.
 func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...operations.Option) (*operations.GetAuthMethodsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -188,7 +190,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -232,12 +234,60 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
-	case httpRes.StatusCode == 403:
-		fallthrough
 	case httpRes.StatusCode == 404:
-		fallthrough
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -265,48 +315,50 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 // UpdateAuthMethod - Update organization authentication methods
 // Update the authentication methods configuration for an organization.
 // This allows admins to configure single or multi-factor authentication.
-// <br><br>
-// <b>Validation Rules:</b><br>
-// - Minimum 1 step, maximum 3 steps<br>
-// - Each step must have a unique order (1, 2, or 3)<br>
-// - No duplicate methods within the same step<br>
-// - No method can appear in multiple steps<br>
+//
+// **Validation Rules:**
+// - Minimum 1 step, maximum 3 steps
+// - Each step must have a unique order (1, 2, or 3)
+// - No duplicate methods within the same step
+// - No method can appear in multiple steps
 // - Each step must have at least one allowed method
-// <br><br>
-// <b>Available Methods:</b><br>
-// - <code>password</code>: Email/password authentication<br>
-// - <code>otp</code>: One-time password via email<br>
-// - <code>google</code>: Google OAuth 2.0<br>
-// - <code>microsoft</code>: Microsoft OAuth 2.0<br>
-// - <code>azureAd</code>: Azure Active Directory<br>
-// - <code>samlSso</code>: SAML 2.0 Single Sign-On<br>
-// - <code>oauth</code>: Generic OAuth 2.0 provider
-// <br><br>
-// <b>Example - Single Factor (Password or Google):</b><br>
-// <pre>
+//
+// **Available Methods:**
+// - `password`: Email/password authentication
+// - `otp`: One-time password via email
+// - `google`: Google OAuth 2.0
+// - `microsoft`: Microsoft OAuth 2.0
+// - `azureAd`: Azure Active Directory
+// - `samlSso`: SAML 2.0 Single Sign-On
+// - `oauth`: Generic OAuth 2.0 provider
+//
+// **Example - Single Factor (Password or Google):**
+//
+// ```json
 //
 //	{
-//	  "authMethods": [
+//	  "authMethod": [
 //	    { "order": 1, "allowedMethods": [{ "type": "password" }, { "type": "google" }] }
 //	  ]
 //	}
 //
-// </pre>
-// <br>
-// <b>Example - Two Factor (Password + OTP):</b><br>
-// <pre>
+// ```
+//
+// **Example - Two Factor (Password + OTP):**
+//
+// ```json
 //
 //	{
-//	  "authMethods": [
+//	  "authMethod": [
 //	    { "order": 1, "allowedMethods": [{ "type": "password" }] },
 //	    { "order": 2, "allowedMethods": [{ "type": "otp" }] }
 //	  ]
 //	}
 //
-// </pre>
-// <br>
-// <b>Admin Access Required:</b> Only organization admins can update auth configuration.
-func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request components.AuthConfig, opts ...operations.Option) (*operations.UpdateAuthMethodResponse, error) {
+// ```
+//
+// **Admin Access Required:** Only organization admins can update auth configuration.
+func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request operations.UpdateAuthMethodRequest, opts ...operations.Option) (*operations.UpdateAuthMethodResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -449,7 +501,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request c
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -480,12 +532,12 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request c
 				return nil, err
 			}
 
-			var out operations.UpdateAuthMethodResponseBody
+			var out components.UpdateAuthMethodResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Object = &out
+			res.UpdateAuthMethodResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -494,6 +546,10 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request c
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 404:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -501,7 +557,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request c
 				return nil, err
 			}
 
-			var out apierrors.AuthError
+			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -518,12 +574,31 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request c
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
-	case httpRes.StatusCode == 401:
-		fallthrough
-	case httpRes.StatusCode == 403:
-		fallthrough
-	case httpRes.StatusCode == 404:
-		fallthrough
+	case httpRes.StatusCode == 500:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -548,9 +623,9 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request c
 
 }
 
-// SetUp - Set up auth configuration
+// SetUpAuthConfig - Set up auth configuration
 // Set up or initialize the organization's authentication configuration.
-func (s *OrganizationAuthConfig) SetUp(ctx context.Context, request operations.SetUpAuthConfigRequest, opts ...operations.Option) (*operations.SetUpAuthConfigResponse, error) {
+func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request components.OrgAuthConfigCreateRequest, opts ...operations.Option) (*operations.SetUpAuthConfigResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -569,7 +644,7 @@ func (s *OrganizationAuthConfig) SetUp(ctx context.Context, request operations.S
 	} else {
 		baseURL = *o.ServerURL
 	}
-	opURL, err := url.JoinPath(baseURL, "/orgAuthConfig/")
+	opURL, err := url.JoinPath(baseURL, "/orgAuthConfig")
 	if err != nil {
 		return nil, fmt.Errorf("error generating URL: %w", err)
 	}
@@ -693,7 +768,7 @@ func (s *OrganizationAuthConfig) SetUp(ctx context.Context, request operations.S
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -717,6 +792,8 @@ func (s *OrganizationAuthConfig) SetUp(ctx context.Context, request operations.S
 
 	switch {
 	case httpRes.StatusCode == 200:
+		fallthrough
+	case httpRes.StatusCode == 201:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -724,12 +801,12 @@ func (s *OrganizationAuthConfig) SetUp(ctx context.Context, request operations.S
 				return nil, err
 			}
 
-			var out operations.SetUpAuthConfigResponseBody
+			var out components.OrgAuthConfigSetupResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Object = &out
+			res.OrgAuthConfigSetupResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -737,10 +814,60 @@ func (s *OrganizationAuthConfig) SetUp(ctx context.Context, request operations.S
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
-	case httpRes.StatusCode == 403:
-		fallthrough
+	case httpRes.StatusCode == 404:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {

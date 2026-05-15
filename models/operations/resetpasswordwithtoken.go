@@ -21,7 +21,7 @@ func (r *ResetPasswordWithTokenSecurity) GetScopedToken() string {
 type ResetPasswordWithTokenResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Password reset successfully
-	PasswordResetResponse *components.PasswordResetResponse
+	DataStringResponse *components.DataStringResponse
 }
 
 func (r ResetPasswordWithTokenResponse) MarshalJSON() ([]byte, error) {
@@ -42,9 +42,9 @@ func (r *ResetPasswordWithTokenResponse) GetHTTPMeta() components.HTTPMetadata {
 	return r.HTTPMeta
 }
 
-func (r *ResetPasswordWithTokenResponse) GetPasswordResetResponse() *components.PasswordResetResponse {
+func (r *ResetPasswordWithTokenResponse) GetDataStringResponse() *components.DataStringResponse {
 	if r == nil {
 		return nil
 	}
-	return r.PasswordResetResponse
+	return r.DataStringResponse
 }

@@ -1,9 +1,0 @@
-# SaveConnectorFiltersRequest
-
-
-## Fields
-
-| Field                                                                                            | Type                                                                                             | Required                                                                                         | Description                                                                                      |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `ConnectorID`                                                                                    | *string*                                                                                         | :heavy_check_mark:                                                                               | N/A                                                                                              |
-| `Body`                                                                                           | [components.SaveConnectorFiltersRequest](../../models/components/saveconnectorfiltersrequest.md) | :heavy_check_mark:                                                                               | Request payload                                                                                  |

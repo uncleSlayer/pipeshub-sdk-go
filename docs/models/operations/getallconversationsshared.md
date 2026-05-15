@@ -1,0 +1,11 @@
+# GetAllConversationsShared
+
+
+## Fields
+
+| Field                                         | Type                                          | Required                                      | Description                                   |
+| --------------------------------------------- | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| `Values`                                      | []*string*                                    | :heavy_minus_sign:                            | Accepted values for the `shared` query param. |
+| `Description`                                 | **string*                                     | :heavy_minus_sign:                            | N/A                                           |
+| `Current`                                     | **string*                                     | :heavy_minus_sign:                            | N/A                                           |
+| `Applied`                                     | **bool*                                       | :heavy_minus_sign:                            | N/A                                           |

@@ -2,15 +2,16 @@
 
 package components
 
-// InitAuthRequest - Request to initialize authentication session
+// InitAuthRequest - Optional JSON body for `/userAccount/initAuth`. Valid shapes include: omitting the body entirely, sending `{}` (empty object), or `{ "email": "<address>" }`. Neither the body nor `email` is required. When `email` is omitted or empty, the session is still created and `allowedMethods` / `authProviders` are returned as usual; clients typically supply `email` later on `/userAccount/authenticate`. The `email` property remains supported mainly for legacy clients and backward compatibility.
 type InitAuthRequest struct {
-	// User email address (RFC 5321 compliant)
-	Email string `json:"email"`
+	// Optional; retained for legacy reasons. When set, stored on the auth session for correlation with later `/authenticate` calls (RFC 5321 compliant address).
+	//
+	Email *string `json:"email,omitzero"`
 }
 
-func (i *InitAuthRequest) GetEmail() string {
+func (i *InitAuthRequest) GetEmail() *string {
 	if i == nil {
-		return ""
+		return nil
 	}
 	return i.Email
 }

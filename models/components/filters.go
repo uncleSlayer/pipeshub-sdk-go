@@ -6,9 +6,15 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
+// Filters - App connector instance ids and knowledge-base / record-group ids that narrow retrieval
+// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
+// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
+// to let the service use the agent’s stored knowledge and tool configuration. Sending
+// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
+// turn (it is not “full org default”).
 type Filters struct {
-	// Filter by application types
-	Apps []AppType `json:"apps,omitzero"`
+	// Filter by application connector instance IDs
+	Apps []string `json:"apps,omitzero"`
 	// Filter by knowledge base IDs
 	Kb []string `json:"kb,omitzero"`
 }
@@ -24,7 +30,7 @@ func (f *Filters) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (f *Filters) GetApps() []AppType {
+func (f *Filters) GetApps() []string {
 	if f == nil {
 		return nil
 	}

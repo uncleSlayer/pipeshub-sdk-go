@@ -1,9 +1,0 @@
-# GetGroupStatisticsResponse
-
-
-## Fields
-
-| Field                                                                                                   | Type                                                                                                    | Required                                                                                                | Description                                                                                             |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                              | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                      | :heavy_check_mark:                                                                                      | N/A                                                                                                     |
-| `Object`                                                                                                | [*operations.GetGroupStatisticsResponseBody](../../models/operations/getgroupstatisticsresponsebody.md) | :heavy_minus_sign:                                                                                      | Group statistics retrieved successfully                                                                 |

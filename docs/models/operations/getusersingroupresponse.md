@@ -1,9 +1,0 @@
-# GetUsersInGroupResponse
-
-
-## Fields
-
-| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                | :heavy_check_mark:                                                                                | N/A                                                                                               |
-| `Object`                                                                                          | [*operations.GetUsersInGroupResponseBody](../../models/operations/getusersingroupresponsebody.md) | :heavy_minus_sign:                                                                                | Users in group retrieved successfully                                                             |

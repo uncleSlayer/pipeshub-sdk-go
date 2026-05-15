@@ -1,9 +1,0 @@
-# UnshareConversationByIDRequest
-
-
-## Fields
-
-| Field                                                                                                           | Type                                                                                                            | Required                                                                                                        | Description                                                                                                     |
-| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `ConversationID`                                                                                                | *string*                                                                                                        | :heavy_check_mark:                                                                                              | N/A                                                                                                             |
-| `Body`                                                                                                          | [*operations.UnshareConversationByIDRequestBody](../../models/operations/unshareconversationbyidrequestbody.md) | :heavy_minus_sign:                                                                                              | Request payload                                                                                                 |

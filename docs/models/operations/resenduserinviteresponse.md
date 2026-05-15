@@ -1,9 +1,0 @@
-# ResendUserInviteResponse
-
-
-## Fields
-
-| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
-| `Object`                                                                                            | [*operations.ResendUserInviteResponseBody](../../models/operations/resenduserinviteresponsebody.md) | :heavy_minus_sign:                                                                                  | Invitation resent successfully                                                                      |

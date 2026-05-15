@@ -4,17 +4,19 @@ package components
 
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"time"
 )
 
-// CreateConversationRequest - Request body for creating a new AI conversation.<br><br>
-// <b>Query Processing:</b><br>
+// CreateConversationRequest - Request body for creating a new AI conversation.
+//
+// **Query Processing:**
+//
 // The query is processed through PipesHub's AI pipeline which:
-// <ul>
-// <li>Performs semantic search across indexed knowledge bases</li>
-// <li>Retrieves relevant context from matching documents</li>
-// <li>Generates a response with citations to source materials</li>
-// <li>Suggests follow-up questions based on the conversation</li>
-// </ul>
+//
+// - Performs semantic search across indexed knowledge bases
+// - Retrieves relevant context from matching documents
+// - Generates a response with citations to source materials
+// - Suggests follow-up questions based on the conversation
 type CreateConversationRequest struct {
 	// The user's question or prompt to start the conversation.
 	// Supports natural language queries of any complexity.
@@ -26,17 +28,44 @@ type CreateConversationRequest struct {
 	RecordIds []string `json:"recordIds,omitzero"`
 	// Filter by department IDs to scope the search
 	Departments []string `json:"departments,omitzero"`
-	Filters     *Filters `json:"filters,omitzero"`
+	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
+	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
+	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
+	// to let the service use the agent’s stored knowledge and tool configuration. Sending
+	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
+	// turn (it is not “full org default”).
+	//
+	Filters *Filters `json:"filters,omitzero"`
+	// Rich filter state selected by the user, used for display and persistence only.
+	// This mirrors the active selection shown in the UI and is distinct from the
+	// machine-readable `filters` field used for retrieval scoping.
+	//
+	AppliedFilters *AppliedFilters `json:"appliedFilters,omitzero"`
 	// Identifier for the AI model configuration to use.
 	// Available models depend on organization settings.
 	//
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the AI model
 	ModelName *string `json:"modelName,omitzero"`
+	// Friendly display name of the selected model
+	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode affecting response behavior.
 	// Different modes optimize for different use cases.
 	//
 	ChatMode *string `json:"chatMode,omitzero"`
+	// IANA timezone identifier from the client (top-level field).
+	// Used to provide time-aware context to the AI.
+	//
+	Timezone *string `json:"timezone,omitzero"`
+	// ISO 8601 / RFC 3339 datetime from the client (top-level field; UTC `Z` or numeric offset).
+	//
+	CurrentTime *time.Time `json:"currentTime,omitzero"`
+	// Optional list of tool identifiers (fully-qualified action names such as
+	// "jira.create_issue") that the AI agent is permitted to invoke for this
+	// request. When omitted the agent may use any configured tool. Applicable
+	// only when chatMode is an agent mode (e.g. "agent:auto").
+	//
+	Tools []string `json:"tools,omitzero"`
 }
 
 func (c CreateConversationRequest) MarshalJSON() ([]byte, error) {
@@ -78,6 +107,13 @@ func (c *CreateConversationRequest) GetFilters() *Filters {
 	return c.Filters
 }
 
+func (c *CreateConversationRequest) GetAppliedFilters() *AppliedFilters {
+	if c == nil {
+		return nil
+	}
+	return c.AppliedFilters
+}
+
 func (c *CreateConversationRequest) GetModelKey() *string {
 	if c == nil {
 		return nil
@@ -92,9 +128,37 @@ func (c *CreateConversationRequest) GetModelName() *string {
 	return c.ModelName
 }
 
+func (c *CreateConversationRequest) GetModelFriendlyName() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ModelFriendlyName
+}
+
 func (c *CreateConversationRequest) GetChatMode() *string {
 	if c == nil {
 		return nil
 	}
 	return c.ChatMode
+}
+
+func (c *CreateConversationRequest) GetTimezone() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Timezone
+}
+
+func (c *CreateConversationRequest) GetCurrentTime() *time.Time {
+	if c == nil {
+		return nil
+	}
+	return c.CurrentTime
+}
+
+func (c *CreateConversationRequest) GetTools() []string {
+	if c == nil {
+		return nil
+	}
+	return c.Tools
 }

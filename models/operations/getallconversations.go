@@ -3,10 +3,231 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
 )
+
+// QueryParamSource - `owned` — owner list (`userId` filter only).
+// `shared` — explicit share grant list (`isShared` + `sharedWith`).
+// Defaults to `owned` when omitted.
+type QueryParamSource string
+
+const (
+	QueryParamSourceOwned  QueryParamSource = "owned"
+	QueryParamSourceShared QueryParamSource = "shared"
+)
+
+func (e QueryParamSource) ToPointer() *QueryParamSource {
+	return &e
+}
+func (e *QueryParamSource) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "owned":
+		fallthrough
+	case "shared":
+		*e = QueryParamSource(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for QueryParamSource: %v", v)
+	}
+}
+
+// GetAllConversationsSortByEnum - Sort field. Invalid values fall back to `lastActivityAt`.
+type GetAllConversationsSortByEnum string
+
+const (
+	GetAllConversationsSortByEnumCreatedAt      GetAllConversationsSortByEnum = "createdAt"
+	GetAllConversationsSortByEnumLastActivityAt GetAllConversationsSortByEnum = "lastActivityAt"
+	GetAllConversationsSortByEnumTitle          GetAllConversationsSortByEnum = "title"
+)
+
+func (e GetAllConversationsSortByEnum) ToPointer() *GetAllConversationsSortByEnum {
+	return &e
+}
+func (e *GetAllConversationsSortByEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "createdAt":
+		fallthrough
+	case "lastActivityAt":
+		fallthrough
+	case "title":
+		*e = GetAllConversationsSortByEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetAllConversationsSortByEnum: %v", v)
+	}
+}
+
+// GetAllConversationsSortOrderEnum - Sort direction. Defaults to `desc` unless set to `asc`.
+type GetAllConversationsSortOrderEnum string
+
+const (
+	GetAllConversationsSortOrderEnumAsc  GetAllConversationsSortOrderEnum = "asc"
+	GetAllConversationsSortOrderEnumDesc GetAllConversationsSortOrderEnum = "desc"
+)
+
+func (e GetAllConversationsSortOrderEnum) ToPointer() *GetAllConversationsSortOrderEnum {
+	return &e
+}
+func (e *GetAllConversationsSortOrderEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "asc":
+		fallthrough
+	case "desc":
+		*e = GetAllConversationsSortOrderEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetAllConversationsSortOrderEnum: %v", v)
+	}
+}
+
+type GetAllConversationsRequest struct {
+	// `owned` — owner list (`userId` filter only).
+	// `shared` — explicit share grant list (`isShared` + `sharedWith`).
+	// Defaults to `owned` when omitted.
+	//
+	Source *QueryParamSource `default:"owned" queryParam:"style=form,explode=true,name=source"`
+	// Page number (1-based). Defaults to 1.
+	Page *int64 `queryParam:"style=form,explode=true,name=page"`
+	// Page size. Defaults to 20; capped by the server (max 100).
+	Limit *int64 `queryParam:"style=form,explode=true,name=limit"`
+	// Sort field. Invalid values fall back to `lastActivityAt`.
+	SortBy *GetAllConversationsSortByEnum `queryParam:"style=form,explode=true,name=sortBy"`
+	// Sort direction. Defaults to `desc` unless set to `asc`.
+	SortOrder *GetAllConversationsSortOrderEnum `queryParam:"style=form,explode=true,name=sortOrder"`
+	// When set, restricts results to that conversation ID (if visible under the chosen `source`).
+	ConversationID *string `queryParam:"style=form,explode=true,name=conversationId"`
+	// Case-insensitive match on title and message content (max 1000 characters).
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Filter by `createdAt` ≥ this ISO date.
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
+	// Filter by `createdAt` ≤ this ISO date.
+	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
+	// When set, filters by `isShared`. Accepts case-insensitive
+	// `true`/`false`, or `1`/`0`.
+	//
+	Shared *string `queryParam:"style=form,explode=true,name=shared"`
+}
+
+func (g GetAllConversationsRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsRequest) GetSource() *QueryParamSource {
+	if g == nil {
+		return nil
+	}
+	return g.Source
+}
+
+func (g *GetAllConversationsRequest) GetPage() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Page
+}
+
+func (g *GetAllConversationsRequest) GetLimit() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Limit
+}
+
+func (g *GetAllConversationsRequest) GetSortBy() *GetAllConversationsSortByEnum {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetAllConversationsRequest) GetSortOrder() *GetAllConversationsSortOrderEnum {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+func (g *GetAllConversationsRequest) GetConversationID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ConversationID
+}
+
+func (g *GetAllConversationsRequest) GetSearch() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Search
+}
+
+func (g *GetAllConversationsRequest) GetStartDate() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.StartDate
+}
+
+func (g *GetAllConversationsRequest) GetEndDate() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.EndDate
+}
+
+func (g *GetAllConversationsRequest) GetShared() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Shared
+}
+
+// GetAllConversationsSourceResponse - Echoes the requested `source` query value.
+type GetAllConversationsSourceResponse string
+
+const (
+	GetAllConversationsSourceResponseOwned  GetAllConversationsSourceResponse = "owned"
+	GetAllConversationsSourceResponseShared GetAllConversationsSourceResponse = "shared"
+)
+
+func (e GetAllConversationsSourceResponse) ToPointer() *GetAllConversationsSourceResponse {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetAllConversationsSourceResponse) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "owned", "shared":
+			return true
+		}
+	}
+	return false
+}
 
 type GetAllConversationsPagination struct {
 	Page        *int64 `json:"page,omitzero"`
@@ -59,8 +280,981 @@ func (g *GetAllConversationsPagination) GetHasPrevPage() *bool {
 	return g.HasPrevPage
 }
 
-// GetAllConversationsFilters - Applied and available filters
+type ValuesDateRange struct {
+	Start optionalnullable.OptionalNullable[string] `json:"start,omitzero"`
+	End   optionalnullable.OptionalNullable[string] `json:"end,omitzero"`
+}
+
+func (v *ValuesDateRange) GetStart() optionalnullable.OptionalNullable[string] {
+	if v == nil {
+		return nil
+	}
+	return v.Start
+}
+
+func (v *ValuesDateRange) GetEnd() optionalnullable.OptionalNullable[string] {
+	if v == nil {
+		return nil
+	}
+	return v.End
+}
+
+// Values - Current value for each applied filter. Only keys
+// present in `filters` are populated; others are
+// omitted.
+type Values struct {
+	Search      *string          `json:"search,omitzero"`
+	Shared      *string          `json:"shared,omitzero"`
+	Tags        *string          `json:"tags,omitzero"`
+	MinMessages *string          `json:"minMessages,omitzero"`
+	SortBy      *string          `json:"sortBy,omitzero"`
+	SortOrder   *string          `json:"sortOrder,omitzero"`
+	StartDate   *string          `json:"startDate,omitzero"`
+	EndDate     *string          `json:"endDate,omitzero"`
+	MessageType *string          `json:"messageType,omitzero"`
+	Page        *int64           `json:"page,omitzero"`
+	Limit       *int64           `json:"limit,omitzero"`
+	DateRange   *ValuesDateRange `json:"dateRange,omitzero"`
+}
+
+func (v Values) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(v, "", false)
+}
+
+func (v *Values) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &v, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Values) GetSearch() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Search
+}
+
+func (v *Values) GetShared() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Shared
+}
+
+func (v *Values) GetTags() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Tags
+}
+
+func (v *Values) GetMinMessages() *string {
+	if v == nil {
+		return nil
+	}
+	return v.MinMessages
+}
+
+func (v *Values) GetSortBy() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SortBy
+}
+
+func (v *Values) GetSortOrder() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SortOrder
+}
+
+func (v *Values) GetStartDate() *string {
+	if v == nil {
+		return nil
+	}
+	return v.StartDate
+}
+
+func (v *Values) GetEndDate() *string {
+	if v == nil {
+		return nil
+	}
+	return v.EndDate
+}
+
+func (v *Values) GetMessageType() *string {
+	if v == nil {
+		return nil
+	}
+	return v.MessageType
+}
+
+func (v *Values) GetPage() *int64 {
+	if v == nil {
+		return nil
+	}
+	return v.Page
+}
+
+func (v *Values) GetLimit() *int64 {
+	if v == nil {
+		return nil
+	}
+	return v.Limit
+}
+
+func (v *Values) GetDateRange() *ValuesDateRange {
+	if v == nil {
+		return nil
+	}
+	return v.DateRange
+}
+
+type GetAllConversationsApplied struct {
+	// Names of filters currently applied.
+	Filters []string `json:"filters"`
+	// Current value for each applied filter. Only keys
+	// present in `filters` are populated; others are
+	// omitted.
+	//
+	Values Values `json:"values"`
+}
+
+func (g *GetAllConversationsApplied) GetFilters() []string {
+	if g == nil {
+		return []string{}
+	}
+	return g.Filters
+}
+
+func (g *GetAllConversationsApplied) GetValues() Values {
+	if g == nil {
+		return Values{}
+	}
+	return g.Values
+}
+
+type GetAllConversationsShared struct {
+	// Accepted values for the `shared` query param.
+	Values      []string                                  `json:"values,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g GetAllConversationsShared) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsShared) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsShared) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetAllConversationsShared) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsShared) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsShared) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsTags struct {
+	Type        *string                                   `json:"type,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g *GetAllConversationsTags) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetAllConversationsTags) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsTags) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsTags) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsMinMessages struct {
+	Type        *string                                    `json:"type,omitzero"`
+	Description *string                                    `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[float64] `json:"current,omitzero"`
+	Applied     *bool                                      `json:"applied,omitzero"`
+}
+
+func (g *GetAllConversationsMinMessages) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetAllConversationsMinMessages) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsMinMessages) GetCurrent() optionalnullable.OptionalNullable[float64] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsMinMessages) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsSearch struct {
+	Type        *string                                   `json:"type,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g *GetAllConversationsSearch) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetAllConversationsSearch) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsSearch) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsSearch) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsPage struct {
+	Type        *string `json:"type,omitzero"`
+	Current     *int64  `json:"current,omitzero"`
+	Min         *int64  `json:"min,omitzero"`
+	Max         *int64  `json:"max,omitzero"`
+	Default     *int64  `json:"default,omitzero"`
+	Description *string `json:"description,omitzero"`
+	Applied     *bool   `json:"applied,omitzero"`
+}
+
+func (g *GetAllConversationsPage) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetAllConversationsPage) GetCurrent() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsPage) GetMin() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Min
+}
+
+func (g *GetAllConversationsPage) GetMax() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Max
+}
+
+func (g *GetAllConversationsPage) GetDefault() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetAllConversationsPage) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsPage) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsLimit struct {
+	Type        *string `json:"type,omitzero"`
+	Current     *int64  `json:"current,omitzero"`
+	Min         *int64  `json:"min,omitzero"`
+	Max         *int64  `json:"max,omitzero"`
+	Default     *int64  `json:"default,omitzero"`
+	Description *string `json:"description,omitzero"`
+	Applied     *bool   `json:"applied,omitzero"`
+}
+
+func (g *GetAllConversationsLimit) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetAllConversationsLimit) GetCurrent() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsLimit) GetMin() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Min
+}
+
+func (g *GetAllConversationsLimit) GetMax() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Max
+}
+
+func (g *GetAllConversationsLimit) GetDefault() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetAllConversationsLimit) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsLimit) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsAvailablePagination struct {
+	Page  *GetAllConversationsPage  `json:"page,omitzero"`
+	Limit *GetAllConversationsLimit `json:"limit,omitzero"`
+}
+
+func (g GetAllConversationsAvailablePagination) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsAvailablePagination) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsAvailablePagination) GetPage() *GetAllConversationsPage {
+	if g == nil {
+		return nil
+	}
+	return g.Page
+}
+
+func (g *GetAllConversationsAvailablePagination) GetLimit() *GetAllConversationsLimit {
+	if g == nil {
+		return nil
+	}
+	return g.Limit
+}
+
+type GetAllConversationsSortingSortBy struct {
+	Values      []string `json:"values,omitzero"`
+	Default     *string  `json:"default,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	Current     *string  `json:"current,omitzero"`
+	Applied     *bool    `json:"applied,omitzero"`
+}
+
+func (g GetAllConversationsSortingSortBy) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsSortingSortBy) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsSortingSortBy) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetAllConversationsSortingSortBy) GetDefault() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetAllConversationsSortingSortBy) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsSortingSortBy) GetCurrent() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsSortingSortBy) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsSortingSortOrder struct {
+	Values      []string `json:"values,omitzero"`
+	Default     *string  `json:"default,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	Current     *string  `json:"current,omitzero"`
+	Applied     *bool    `json:"applied,omitzero"`
+}
+
+func (g GetAllConversationsSortingSortOrder) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsSortingSortOrder) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsSortingSortOrder) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetAllConversationsSortingSortOrder) GetDefault() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetAllConversationsSortingSortOrder) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsSortingSortOrder) GetCurrent() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsSortingSortOrder) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsSorting struct {
+	SortBy    *GetAllConversationsSortingSortBy    `json:"sortBy,omitzero"`
+	SortOrder *GetAllConversationsSortingSortOrder `json:"sortOrder,omitzero"`
+}
+
+func (g GetAllConversationsSorting) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsSorting) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsSorting) GetSortBy() *GetAllConversationsSortingSortBy {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetAllConversationsSorting) GetSortOrder() *GetAllConversationsSortingSortOrder {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+type GetAllConversationsCurrent struct {
+	Start optionalnullable.OptionalNullable[string] `json:"start,omitzero"`
+	End   optionalnullable.OptionalNullable[string] `json:"end,omitzero"`
+}
+
+func (g *GetAllConversationsCurrent) GetStart() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Start
+}
+
+func (g *GetAllConversationsCurrent) GetEnd() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.End
+}
+
+type GetAllConversationsDateFiltersDateRange struct {
+	Type        *string                     `json:"type,omitzero"`
+	Description *string                     `json:"description,omitzero"`
+	Format      *string                     `json:"format,omitzero"`
+	Current     *GetAllConversationsCurrent `json:"current,omitzero"`
+	Applied     *bool                       `json:"applied,omitzero"`
+}
+
+func (g GetAllConversationsDateFiltersDateRange) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsDateFiltersDateRange) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsDateFiltersDateRange) GetType() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Type
+}
+
+func (g *GetAllConversationsDateFiltersDateRange) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsDateFiltersDateRange) GetFormat() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Format
+}
+
+func (g *GetAllConversationsDateFiltersDateRange) GetCurrent() *GetAllConversationsCurrent {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsDateFiltersDateRange) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsDateFilters struct {
+	DateRange *GetAllConversationsDateFiltersDateRange `json:"dateRange,omitzero"`
+}
+
+func (g GetAllConversationsDateFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsDateFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsDateFilters) GetDateRange() *GetAllConversationsDateFiltersDateRange {
+	if g == nil {
+		return nil
+	}
+	return g.DateRange
+}
+
+type GetAllConversationsMessageType struct {
+	Values      []string                                  `json:"values,omitzero"`
+	Description *string                                   `json:"description,omitzero"`
+	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
+	Applied     *bool                                     `json:"applied,omitzero"`
+}
+
+func (g GetAllConversationsMessageType) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsMessageType) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsMessageType) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetAllConversationsMessageType) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsMessageType) GetCurrent() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+func (g *GetAllConversationsMessageType) GetApplied() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Applied
+}
+
+type GetAllConversationsMessageFilters struct {
+	MessageType *GetAllConversationsMessageType `json:"messageType,omitzero"`
+}
+
+func (g GetAllConversationsMessageFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsMessageFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsMessageFilters) GetMessageType() *GetAllConversationsMessageType {
+	if g == nil {
+		return nil
+	}
+	return g.MessageType
+}
+
+type GetAllConversationsSortingMessagesSortBy struct {
+	Values      []string `json:"values,omitzero"`
+	Default     *string  `json:"default,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	Current     *string  `json:"current,omitzero"`
+}
+
+func (g GetAllConversationsSortingMessagesSortBy) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsSortingMessagesSortBy) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsSortingMessagesSortBy) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetAllConversationsSortingMessagesSortBy) GetDefault() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetAllConversationsSortingMessagesSortBy) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsSortingMessagesSortBy) GetCurrent() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+type GetAllConversationsSortingMessagesSortOrder struct {
+	Values      []string `json:"values,omitzero"`
+	Default     *string  `json:"default,omitzero"`
+	Description *string  `json:"description,omitzero"`
+	Current     *string  `json:"current,omitzero"`
+}
+
+func (g GetAllConversationsSortingMessagesSortOrder) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsSortingMessagesSortOrder) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsSortingMessagesSortOrder) GetValues() []string {
+	if g == nil {
+		return nil
+	}
+	return g.Values
+}
+
+func (g *GetAllConversationsSortingMessagesSortOrder) GetDefault() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Default
+}
+
+func (g *GetAllConversationsSortingMessagesSortOrder) GetDescription() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Description
+}
+
+func (g *GetAllConversationsSortingMessagesSortOrder) GetCurrent() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Current
+}
+
+type GetAllConversationsSortingMessages struct {
+	SortBy    *GetAllConversationsSortingMessagesSortBy    `json:"sortBy,omitzero"`
+	SortOrder *GetAllConversationsSortingMessagesSortOrder `json:"sortOrder,omitzero"`
+}
+
+func (g GetAllConversationsSortingMessages) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetAllConversationsSortingMessages) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *GetAllConversationsSortingMessages) GetSortBy() *GetAllConversationsSortingMessagesSortBy {
+	if g == nil {
+		return nil
+	}
+	return g.SortBy
+}
+
+func (g *GetAllConversationsSortingMessages) GetSortOrder() *GetAllConversationsSortingMessagesSortOrder {
+	if g == nil {
+		return nil
+	}
+	return g.SortOrder
+}
+
+type GetAllConversationsAvailable struct {
+	Shared          GetAllConversationsShared              `json:"shared"`
+	Tags            GetAllConversationsTags                `json:"tags"`
+	MinMessages     GetAllConversationsMinMessages         `json:"minMessages"`
+	Search          GetAllConversationsSearch              `json:"search"`
+	Pagination      GetAllConversationsAvailablePagination `json:"pagination"`
+	Sorting         GetAllConversationsSorting             `json:"sorting"`
+	DateFilters     GetAllConversationsDateFilters         `json:"dateFilters"`
+	MessageFilters  GetAllConversationsMessageFilters      `json:"messageFilters"`
+	SortingMessages GetAllConversationsSortingMessages     `json:"sortingMessages"`
+}
+
+func (g *GetAllConversationsAvailable) GetShared() GetAllConversationsShared {
+	if g == nil {
+		return GetAllConversationsShared{}
+	}
+	return g.Shared
+}
+
+func (g *GetAllConversationsAvailable) GetTags() GetAllConversationsTags {
+	if g == nil {
+		return GetAllConversationsTags{}
+	}
+	return g.Tags
+}
+
+func (g *GetAllConversationsAvailable) GetMinMessages() GetAllConversationsMinMessages {
+	if g == nil {
+		return GetAllConversationsMinMessages{}
+	}
+	return g.MinMessages
+}
+
+func (g *GetAllConversationsAvailable) GetSearch() GetAllConversationsSearch {
+	if g == nil {
+		return GetAllConversationsSearch{}
+	}
+	return g.Search
+}
+
+func (g *GetAllConversationsAvailable) GetPagination() GetAllConversationsAvailablePagination {
+	if g == nil {
+		return GetAllConversationsAvailablePagination{}
+	}
+	return g.Pagination
+}
+
+func (g *GetAllConversationsAvailable) GetSorting() GetAllConversationsSorting {
+	if g == nil {
+		return GetAllConversationsSorting{}
+	}
+	return g.Sorting
+}
+
+func (g *GetAllConversationsAvailable) GetDateFilters() GetAllConversationsDateFilters {
+	if g == nil {
+		return GetAllConversationsDateFilters{}
+	}
+	return g.DateFilters
+}
+
+func (g *GetAllConversationsAvailable) GetMessageFilters() GetAllConversationsMessageFilters {
+	if g == nil {
+		return GetAllConversationsMessageFilters{}
+	}
+	return g.MessageFilters
+}
+
+func (g *GetAllConversationsAvailable) GetSortingMessages() GetAllConversationsSortingMessages {
+	if g == nil {
+		return GetAllConversationsSortingMessages{}
+	}
+	return g.SortingMessages
+}
+
+// GetAllConversationsFilters - Filter introspection block. `applied` summarises the
+// filters active on this request; `available` catalogues
+// every supported filter with its current value and whether
+// it is applied.
 type GetAllConversationsFilters struct {
+	Applied   GetAllConversationsApplied   `json:"applied"`
+	Available GetAllConversationsAvailable `json:"available"`
+}
+
+func (g *GetAllConversationsFilters) GetApplied() GetAllConversationsApplied {
+	if g == nil {
+		return GetAllConversationsApplied{}
+	}
+	return g.Applied
+}
+
+func (g *GetAllConversationsFilters) GetAvailable() GetAllConversationsAvailable {
+	if g == nil {
+		return GetAllConversationsAvailable{}
+	}
+	return g.Available
 }
 
 type GetAllConversationsMeta struct {
@@ -101,65 +1295,59 @@ func (g *GetAllConversationsMeta) GetDuration() *int64 {
 	return g.Duration
 }
 
-// GetAllConversationsResponseBody - List of conversations
+// GetAllConversationsResponseBody - List of conversations for the requested source
 type GetAllConversationsResponseBody struct {
-	Conversations             []components.Conversation      `json:"conversations,omitzero"`
-	SharedWithMeConversations []components.Conversation      `json:"sharedWithMeConversations,omitzero"`
-	Pagination                *GetAllConversationsPagination `json:"pagination,omitzero"`
-	// Applied and available filters
-	Filters *GetAllConversationsFilters `json:"filters,omitzero"`
-	Meta    *GetAllConversationsMeta    `json:"meta,omitzero"`
+	Conversations []components.ConversationListItem `json:"conversations"`
+	// Echoes the requested `source` query value.
+	Source     GetAllConversationsSourceResponse `json:"source"`
+	Pagination GetAllConversationsPagination     `json:"pagination"`
+	// Filter introspection block. `applied` summarises the
+	// filters active on this request; `available` catalogues
+	// every supported filter with its current value and whether
+	// it is applied.
+	//
+	Filters GetAllConversationsFilters `json:"filters"`
+	Meta    GetAllConversationsMeta    `json:"meta"`
 }
 
-func (g GetAllConversationsResponseBody) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(g, "", false)
-}
-
-func (g *GetAllConversationsResponseBody) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *GetAllConversationsResponseBody) GetConversations() []components.Conversation {
+func (g *GetAllConversationsResponseBody) GetConversations() []components.ConversationListItem {
 	if g == nil {
-		return nil
+		return []components.ConversationListItem{}
 	}
 	return g.Conversations
 }
 
-func (g *GetAllConversationsResponseBody) GetSharedWithMeConversations() []components.Conversation {
+func (g *GetAllConversationsResponseBody) GetSource() GetAllConversationsSourceResponse {
 	if g == nil {
-		return nil
+		return GetAllConversationsSourceResponse("")
 	}
-	return g.SharedWithMeConversations
+	return g.Source
 }
 
-func (g *GetAllConversationsResponseBody) GetPagination() *GetAllConversationsPagination {
+func (g *GetAllConversationsResponseBody) GetPagination() GetAllConversationsPagination {
 	if g == nil {
-		return nil
+		return GetAllConversationsPagination{}
 	}
 	return g.Pagination
 }
 
-func (g *GetAllConversationsResponseBody) GetFilters() *GetAllConversationsFilters {
+func (g *GetAllConversationsResponseBody) GetFilters() GetAllConversationsFilters {
 	if g == nil {
-		return nil
+		return GetAllConversationsFilters{}
 	}
 	return g.Filters
 }
 
-func (g *GetAllConversationsResponseBody) GetMeta() *GetAllConversationsMeta {
+func (g *GetAllConversationsResponseBody) GetMeta() GetAllConversationsMeta {
 	if g == nil {
-		return nil
+		return GetAllConversationsMeta{}
 	}
 	return g.Meta
 }
 
 type GetAllConversationsResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// List of conversations
+	// List of conversations for the requested source
 	Object *GetAllConversationsResponseBody
 }
 

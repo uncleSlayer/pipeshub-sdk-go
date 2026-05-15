@@ -3,7 +3,6 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
@@ -32,17 +31,6 @@ type AuthenticateResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Authentication step successful or fully authenticated
 	AuthenticateResponse *components.AuthenticateResponse
-}
-
-func (a AuthenticateResponse) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(a, "", false)
-}
-
-func (a *AuthenticateResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (a *AuthenticateResponse) GetHTTPMeta() components.HTTPMetadata {

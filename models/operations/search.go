@@ -9,8 +9,8 @@ import (
 
 type SearchResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Search results with matching documents
-	SearchResult *components.SearchResult
+	// Search ID plus retrieval payload (`searchResponse`) from the AI search service
+	SemanticSearchExecuteResponse *components.SemanticSearchExecuteResponse
 }
 
 func (s SearchResponse) MarshalJSON() ([]byte, error) {
@@ -31,9 +31,9 @@ func (s *SearchResponse) GetHTTPMeta() components.HTTPMetadata {
 	return s.HTTPMeta
 }
 
-func (s *SearchResponse) GetSearchResult() *components.SearchResult {
+func (s *SearchResponse) GetSemanticSearchExecuteResponse() *components.SemanticSearchExecuteResponse {
 	if s == nil {
 		return nil
 	}
-	return s.SearchResult
+	return s.SemanticSearchExecuteResponse
 }

@@ -6,96 +6,18 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
-type Google struct {
-	// Google OAuth client ID
-	ClientID *string `json:"clientId,omitzero"`
-}
-
-func (g *Google) GetClientID() *string {
-	if g == nil {
-		return nil
-	}
-	return g.ClientID
-}
-
-type Microsoft struct {
-	// Microsoft tenant ID
-	TenantID *string `json:"tenantId,omitzero"`
-	// Microsoft OAuth client ID
-	ClientID *string `json:"clientId,omitzero"`
-}
-
-func (m *Microsoft) GetTenantID() *string {
-	if m == nil {
-		return nil
-	}
-	return m.TenantID
-}
-
-func (m *Microsoft) GetClientID() *string {
-	if m == nil {
-		return nil
-	}
-	return m.ClientID
-}
-
-type Azuread struct {
-	// Azure AD tenant ID
-	TenantID *string `json:"tenantId,omitzero"`
-	// Azure AD client ID
-	ClientID *string `json:"clientId,omitzero"`
-}
-
-func (a *Azuread) GetTenantID() *string {
-	if a == nil {
-		return nil
-	}
-	return a.TenantID
-}
-
-func (a *Azuread) GetClientID() *string {
-	if a == nil {
-		return nil
-	}
-	return a.ClientID
-}
-
-type Oauth struct {
-	// Custom OAuth provider name
-	ProviderName *string `json:"providerName,omitzero"`
-	// OAuth client ID
-	ClientID *string `json:"clientId,omitzero"`
-	// OAuth authorization URL
-	AuthorizationURL *string `json:"authorizationUrl,omitzero"`
-}
-
-func (o *Oauth) GetProviderName() *string {
-	if o == nil {
-		return nil
-	}
-	return o.ProviderName
-}
-
-func (o *Oauth) GetClientID() *string {
-	if o == nil {
-		return nil
-	}
-	return o.ClientID
-}
-
-func (o *Oauth) GetAuthorizationURL() *string {
-	if o == nil {
-		return nil
-	}
-	return o.AuthorizationURL
-}
-
 // AuthProviders - Configuration for external authentication providers (returned when those methods are allowed)
 type AuthProviders struct {
-	Google    *Google    `json:"google,omitzero"`
-	Microsoft *Microsoft `json:"microsoft,omitzero"`
-	Azuread   *Azuread   `json:"azuread,omitzero"`
-	Oauth     *Oauth     `json:"oauth,omitzero"`
+	// Public Google OAuth settings returned to clients
+	Google *AuthProviderGooglePublicConfig `json:"google,omitzero"`
+	// Public Microsoft OAuth settings returned to clients
+	Microsoft *AuthProviderMicrosoftPublicConfig `json:"microsoft,omitzero"`
+	// Public Azure AD OAuth settings returned to clients
+	Azuread *AuthProviderAzureAdPublicConfig `json:"azuread,omitzero"`
+	// Public generic OAuth provider settings returned to clients
+	Oauth *AuthProviderOAuthPublicConfig `json:"oauth,omitzero"`
+	// Present when SAML SSO is an allowed method; may be an empty object
+	Saml map[string]any `json:"saml,omitzero"`
 }
 
 func (a AuthProviders) MarshalJSON() ([]byte, error) {
@@ -109,30 +31,37 @@ func (a *AuthProviders) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AuthProviders) GetGoogle() *Google {
+func (a *AuthProviders) GetGoogle() *AuthProviderGooglePublicConfig {
 	if a == nil {
 		return nil
 	}
 	return a.Google
 }
 
-func (a *AuthProviders) GetMicrosoft() *Microsoft {
+func (a *AuthProviders) GetMicrosoft() *AuthProviderMicrosoftPublicConfig {
 	if a == nil {
 		return nil
 	}
 	return a.Microsoft
 }
 
-func (a *AuthProviders) GetAzuread() *Azuread {
+func (a *AuthProviders) GetAzuread() *AuthProviderAzureAdPublicConfig {
 	if a == nil {
 		return nil
 	}
 	return a.Azuread
 }
 
-func (a *AuthProviders) GetOauth() *Oauth {
+func (a *AuthProviders) GetOauth() *AuthProviderOAuthPublicConfig {
 	if a == nil {
 		return nil
 	}
 	return a.Oauth
+}
+
+func (a *AuthProviders) GetSaml() map[string]any {
+	if a == nil {
+		return nil
+	}
+	return a.Saml
 }

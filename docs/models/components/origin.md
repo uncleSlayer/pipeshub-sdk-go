@@ -1,14 +1,11 @@
 # Origin
 
-Source of the record:
-- UPLOAD: Manually uploaded via API/UI
-- CONNECTOR: Synced from external connector
-
+Origin type.
 
 
 ## Values
 
-| Name              | Value             |
-| ----------------- | ----------------- |
-| `OriginUpload`    | UPLOAD            |
-| `OriginConnector` | CONNECTOR         |
+| Name               | Value              |
+| ------------------ | ------------------ |
+| `OriginCollection` | COLLECTION         |
+| `OriginConnector`  | CONNECTOR          |

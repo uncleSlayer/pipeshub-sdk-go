@@ -1,9 +1,0 @@
-# UpdateOrganizationResponse
-
-
-## Fields
-
-| Field                                                                                                   | Type                                                                                                    | Required                                                                                                | Description                                                                                             |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                              | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                      | :heavy_check_mark:                                                                                      | N/A                                                                                                     |
-| `Object`                                                                                                | [*operations.UpdateOrganizationResponseBody](../../models/operations/updateorganizationresponsebody.md) | :heavy_minus_sign:                                                                                      | Organization updated successfully                                                                       |

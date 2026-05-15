@@ -1,9 +1,0 @@
-# RemoveUserFromTeamRequest
-
-
-## Fields
-
-| Field                                                                                                | Type                                                                                                 | Required                                                                                             | Description                                                                                          |
-| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `TeamID`                                                                                             | *string*                                                                                             | :heavy_check_mark:                                                                                   | N/A                                                                                                  |
-| `Body`                                                                                               | [operations.RemoveUserFromTeamRequestBody](../../models/operations/removeuserfromteamrequestbody.md) | :heavy_check_mark:                                                                                   | Request payload                                                                                      |

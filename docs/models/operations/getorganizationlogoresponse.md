@@ -1,9 +1,0 @@
-# GetOrganizationLogoResponse
-
-
-## Fields
-
-| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
-| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `HTTPMeta`                                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                        | :heavy_check_mark:                                                                                        | N/A                                                                                                       |
-| `Object`                                                                                                  | [*operations.GetOrganizationLogoResponseBody](../../models/operations/getorganizationlogoresponsebody.md) | :heavy_minus_sign:                                                                                        | Logo URL retrieved successfully                                                                           |

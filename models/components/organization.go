@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-// OrganizationAccountType - Type of account
-type OrganizationAccountType string
+// AccountType - Type of account
+type AccountType string
 
 const (
-	OrganizationAccountTypeIndividual OrganizationAccountType = "individual"
-	OrganizationAccountTypeBusiness   OrganizationAccountType = "business"
+	AccountTypeIndividual AccountType = "individual"
+	AccountTypeBusiness   AccountType = "business"
 )
 
-func (e OrganizationAccountType) ToPointer() *OrganizationAccountType {
+func (e AccountType) ToPointer() *AccountType {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *OrganizationAccountType) IsExact() bool {
+func (e *AccountType) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "individual", "business":
@@ -68,8 +68,8 @@ type Organization struct {
 	// Contact email address
 	ContactEmail string `json:"contactEmail"`
 	// Type of account
-	AccountType      OrganizationAccountType `json:"accountType"`
-	PermanentAddress *Address                `json:"permanentAddress,omitzero"`
+	AccountType      AccountType `json:"accountType"`
+	PermanentAddress *Address    `json:"permanentAddress,omitzero"`
 	// Onboarding status
 	OnBoardingStatus *OnBoardingStatus `json:"onBoardingStatus,omitzero"`
 	// Soft delete flag
@@ -135,9 +135,9 @@ func (o *Organization) GetContactEmail() string {
 	return o.ContactEmail
 }
 
-func (o *Organization) GetAccountType() OrganizationAccountType {
+func (o *Organization) GetAccountType() AccountType {
 	if o == nil {
-		return OrganizationAccountType("")
+		return AccountType("")
 	}
 	return o.AccountType
 }

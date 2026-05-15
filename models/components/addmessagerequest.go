@@ -4,19 +4,46 @@ package components
 
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"time"
 )
 
 // AddMessageRequest - Request body for adding a message to an existing conversation
 type AddMessageRequest struct {
 	// The follow-up question or message content
-	Query   string   `json:"query"`
+	Query string `json:"query"`
+	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
+	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
+	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
+	// to let the service use the agent’s stored knowledge and tool configuration. Sending
+	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
+	// turn (it is not “full org default”).
+	//
 	Filters *Filters `json:"filters,omitzero"`
+	// Rich filter state selected by the user, used for display and persistence only.
+	// This mirrors the active selection shown in the UI and is distinct from the
+	// machine-readable `filters` field used for retrieval scoping.
+	//
+	AppliedFilters *AppliedFilters `json:"appliedFilters,omitzero"`
 	// Override the model for this specific message
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the model
 	ModelName *string `json:"modelName,omitzero"`
+	// Friendly display name of the model
+	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode for this message
 	ChatMode *string `json:"chatMode,omitzero"`
+	// IANA timezone identifier from the client (top-level field).
+	// Used to provide time-aware context to the AI.
+	//
+	Timezone *string `json:"timezone,omitzero"`
+	// ISO 8601 / RFC 3339 datetime from the client (top-level field; UTC `Z` or numeric offset).
+	//
+	CurrentTime *time.Time `json:"currentTime,omitzero"`
+	// Optional list of tool identifiers the agent may invoke for this
+	// follow-up message. Semantics are identical to the create-conversation
+	// tools field.
+	//
+	Tools []string `json:"tools,omitzero"`
 }
 
 func (a AddMessageRequest) MarshalJSON() ([]byte, error) {
@@ -44,6 +71,13 @@ func (a *AddMessageRequest) GetFilters() *Filters {
 	return a.Filters
 }
 
+func (a *AddMessageRequest) GetAppliedFilters() *AppliedFilters {
+	if a == nil {
+		return nil
+	}
+	return a.AppliedFilters
+}
+
 func (a *AddMessageRequest) GetModelKey() *string {
 	if a == nil {
 		return nil
@@ -58,9 +92,37 @@ func (a *AddMessageRequest) GetModelName() *string {
 	return a.ModelName
 }
 
+func (a *AddMessageRequest) GetModelFriendlyName() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ModelFriendlyName
+}
+
 func (a *AddMessageRequest) GetChatMode() *string {
 	if a == nil {
 		return nil
 	}
 	return a.ChatMode
+}
+
+func (a *AddMessageRequest) GetTimezone() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Timezone
+}
+
+func (a *AddMessageRequest) GetCurrentTime() *time.Time {
+	if a == nil {
+		return nil
+	}
+	return a.CurrentTime
+}
+
+func (a *AddMessageRequest) GetTools() []string {
+	if a == nil {
+		return nil
+	}
+	return a.Tools
 }

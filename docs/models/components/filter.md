@@ -1,12 +1,19 @@
 # Filter
 
 
-## Fields
+## Values
 
-| Field                                                                         | Type                                                                          | Required                                                                      | Description                                                                   |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `Key`                                                                         | **string*                                                                     | :heavy_minus_sign:                                                            | Filter field key                                                              |
-| `Label`                                                                       | **string*                                                                     | :heavy_minus_sign:                                                            | Display label                                                                 |
-| `Type`                                                                        | [*components.FilterOptionsType](../../models/components/filteroptionstype.md) | :heavy_minus_sign:                                                            | Filter input type                                                             |
-| `Options`                                                                     | [][components.Option](../../models/components/option.md)                      | :heavy_minus_sign:                                                            | N/A                                                                           |
-| `Dynamic`                                                                     | **bool*                                                                       | :heavy_minus_sign:                                                            | Whether options are loaded dynamically                                        |
+| Name                | Value               |
+| ------------------- | ------------------- |
+| `FilterPage`        | page                |
+| `FilterLimit`       | limit               |
+| `FilterSearch`      | search              |
+| `FilterShared`      | shared              |
+| `FilterTags`        | tags                |
+| `FilterMinMessages` | minMessages         |
+| `FilterSortBy`      | sortBy              |
+| `FilterSortOrder`   | sortOrder           |
+| `FilterStartDate`   | startDate           |
+| `FilterEndDate`     | endDate             |
+| `FilterMessageType` | messageType         |
+| `FilterDateRange`   | dateRange           |

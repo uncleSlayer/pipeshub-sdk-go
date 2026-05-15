@@ -7,26 +7,10 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// SetUpAuthConfigRequest - Request payload
-type SetUpAuthConfigRequest struct {
-}
-
-// SetUpAuthConfigResponseBody - Auth configuration set up successfully
-type SetUpAuthConfigResponseBody struct {
-	Message *string `json:"message,omitzero"`
-}
-
-func (s *SetUpAuthConfigResponseBody) GetMessage() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Message
-}
-
 type SetUpAuthConfigResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Auth configuration set up successfully
-	Object *SetUpAuthConfigResponseBody
+	// Auth configuration already exists for this deployment
+	OrgAuthConfigSetupResponse *components.OrgAuthConfigSetupResponse
 }
 
 func (s SetUpAuthConfigResponse) MarshalJSON() ([]byte, error) {
@@ -47,9 +31,9 @@ func (s *SetUpAuthConfigResponse) GetHTTPMeta() components.HTTPMetadata {
 	return s.HTTPMeta
 }
 
-func (s *SetUpAuthConfigResponse) GetObject() *SetUpAuthConfigResponseBody {
+func (s *SetUpAuthConfigResponse) GetOrgAuthConfigSetupResponse() *components.OrgAuthConfigSetupResponse {
 	if s == nil {
 		return nil
 	}
-	return s.Object
+	return s.OrgAuthConfigSetupResponse
 }

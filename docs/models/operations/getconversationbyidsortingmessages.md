@@ -1,0 +1,11 @@
+# GetConversationByIDSortingMessages
+
+Sort applied to messages within the conversation (separate from the conversation-list `sorting` block).
+
+
+## Fields
+
+| Field                                                                                                                             | Type                                                                                                                              | Required                                                                                                                          | Description                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `SortBy`                                                                                                                          | [*operations.GetConversationByIDSortingMessagesSortBy](../../models/operations/getconversationbyidsortingmessagessortby.md)       | :heavy_minus_sign:                                                                                                                | N/A                                                                                                                               |
+| `SortOrder`                                                                                                                       | [*operations.GetConversationByIDSortingMessagesSortOrder](../../models/operations/getconversationbyidsortingmessagessortorder.md) | :heavy_minus_sign:                                                                                                                | N/A                                                                                                                               |

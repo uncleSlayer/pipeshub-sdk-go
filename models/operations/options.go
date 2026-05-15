@@ -21,12 +21,8 @@ const (
 type AcceptHeaderEnum string
 
 const (
-	AcceptHeaderEnumApplicationJson        AcceptHeaderEnum = "application/json"
-	AcceptHeaderEnumWildcardRootWildcard   AcceptHeaderEnum = "*/*"
-	AcceptHeaderEnumImageJpeg              AcceptHeaderEnum = "image/jpeg"
-	AcceptHeaderEnumImagePng               AcceptHeaderEnum = "image/png"
-	AcceptHeaderEnumApplicationOctetStream AcceptHeaderEnum = "application/octet-stream"
-	AcceptHeaderEnumTextEventStream        AcceptHeaderEnum = "text/event-stream"
+	AcceptHeaderEnumApplicationJson AcceptHeaderEnum = "application/json"
+	AcceptHeaderEnumTextEventStream AcceptHeaderEnum = "text/event-stream"
 )
 
 func (e AcceptHeaderEnum) ToPointer() *AcceptHeaderEnum {

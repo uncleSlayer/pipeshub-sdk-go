@@ -14,8 +14,8 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, components.InitAuthRequest{
-		Email: "user@example.com",
+	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
+		Email: pipeshub.Pointer("user@example.com"),
 	})
 	if err != nil {
 		log.Fatal(err)

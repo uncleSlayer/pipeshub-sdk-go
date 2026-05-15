@@ -29,3 +29,19 @@ credentials := components.CreateCredentialsOAuthCredentials(components.OAuthCred
 credentials := components.CreateCredentialsStr(string{/* values here */})
 ```
 
+## Union Discrimination
+
+Use the `Type` field to determine which variant is active, then access the corresponding field:
+
+```go
+switch credentials.Type {
+	case components.CredentialsTypePasswordCredentials:
+		// credentials.PasswordCredentials is populated
+	case components.CredentialsTypeOtpCredentials:
+		// credentials.OtpCredentials is populated
+	case components.CredentialsTypeOAuthCredentials:
+		// credentials.OAuthCredentials is populated
+	case components.CredentialsTypeStr:
+		// credentials.Str is populated
+}
+```

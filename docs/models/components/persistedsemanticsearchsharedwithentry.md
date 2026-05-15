@@ -1,0 +1,13 @@
+# PersistedSemanticSearchSharedWithEntry
+
+Entry inside `sharedWith[]`. The schema sets `_id: false` on these
+sub-docs, so no auto-injected `_id` is present.
+
+
+
+## Fields
+
+| Field                                                                                                                                        | Type                                                                                                                                         | Required                                                                                                                                     | Description                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UserID`                                                                                                                                     | *string*                                                                                                                                     | :heavy_check_mark:                                                                                                                           | N/A                                                                                                                                          |
+| `AccessLevel`                                                                                                                                | [components.PersistedSemanticSearchSharedWithEntryAccessLevel](../../models/components/persistedsemanticsearchsharedwithentryaccesslevel.md) | :heavy_check_mark:                                                                                                                           | N/A                                                                                                                                          |
