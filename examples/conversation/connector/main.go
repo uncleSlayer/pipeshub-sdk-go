@@ -51,7 +51,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("conversation: %v", err)
 	}
-	if res.AssistantStreamSSEEvent == nil {
+	if res == nil || res.AssistantStreamSSEEvent == nil {
+		log.Fatal("no SSE stream returned")
+	}
 		log.Fatal("no SSE stream returned")
 	}
 	stream := res.AssistantStreamSSEEvent

@@ -11,7 +11,11 @@ import (
 )
 
 func NewClient(email, password string) (*pipeshub.Pipeshub, error) {
-	baseURL := os.Getenv("PIPESHUB_BASE_URL") + "/api/v1"
+	baseURL := os.Getenv("PIPESHUB_BASE_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:3000"
+	}
+	baseURL += "/api/v1"
 	ctx := context.Background()
 
 	s := pipeshub.New(pipeshub.WithServerURL(baseURL))
@@ -31,7 +35,7 @@ func NewClient(email, password string) (*pipeshub.Pipeshub, error) {
 	if err != nil {
 		return nil, fmt.Errorf("authenticate: %w", err)
 	}
-	if authRes.AuthenticateResponse == nil || authRes.AuthenticateResponse.AuthenticateFinalResponse == nil {
+	if authRes == nil || authRes.AuthenticateResponse == nil || authRes.AuthenticateResponse.AuthenticateFinalResponse == nil {
 		return nil, fmt.Errorf("authenticate: expected final response, got multi-step or empty")
 	}
 	accessToken := authRes.AuthenticateResponse.AuthenticateFinalResponse.AccessToken
